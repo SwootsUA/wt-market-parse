@@ -1,4 +1,5 @@
 const config = require('./cli')();
+const {fetchPage, fetchItem} = require('./fetcher');
 
 const PAGE_SIZE = 100;
 const FEE_RATE = 0.15;
@@ -6,80 +7,6 @@ const GENERAL_PRICE_DIVIDER = 100_000_000;
 const ITEM_PRICE_DIVIDER = 10_000;
 const SMALLEST_PRICE_STEP = 0.01;
 const EPOCH_MULTIPLIER = 1_000;
-
-require('dotenv').config();
-const TOKEN = process.env.WT_TOKEN;
-
-async function fetchPage(skip = 0, count = PAGE_SIZE) {
-    const params = new URLSearchParams({
-        action: 'cln_market_search',
-        token: TOKEN,
-        appid_filter: 1067,
-        skip: skip.toString(),
-        count: count.toString(),
-        text: '',
-        language: 'en_US',
-        options: 'any_sell_orders;include_marketpairs',
-    });
-
-    const res = await fetch('https://market-proxy.gaijin.net/web', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            accept: 'application/json, text/plain, */*',
-        },
-        body: params.toString(),
-    });
-    const payload = await res.json();
-    if (!payload.response || !payload.response.assets) {
-        throw new Error(
-            `Bad payload at skip=${skip}: ${JSON.stringify(payload)}`
-        );
-    }
-    return payload.response.assets;
-}
-
-async function fetchItem(item) {
-    const params = new URLSearchParams({
-        action: 'cln_get_pair_stat',
-        token: TOKEN,
-        appid: 1067,
-        market_name: item,
-        currencyid: 'gjn',
-    });
-
-    const res = await fetch('https://market-proxy.gaijin.net/web', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            accept: 'application/json, text/plain, */*',
-        },
-        body: params.toString(),
-    });
-    let payload;
-    try {
-        payload = await res.json();
-    } catch (error) {
-        if (config.debug) {
-            console.error(`Bad item ${item}: ${error}, ${res}`);
-        }
-        return [[0, 0, 0]];
-    }
-    if (!payload.response || !payload.response['1h']) {
-        if (config.debug) {
-            console.error(`Bad item ${item}: ${JSON.stringify(payload)}`);
-        }
-        return [[0, 0, 0]];
-    }
-
-    // 1h is an array of sales in short term
-    // each entry point in this array is an array
-    // 1h[i][0] is time of the transaction, epoch divided by 1000
-    // 1h[i][1] is price, in gjn coins, multiplied by 10000
-    // 1h[i][2] is number of said transactions
-
-    return payload.response['1h'];
-}
 
 function averageStats(transact) {
     if (!transact.length) return 0;
@@ -153,7 +80,7 @@ async function enrichAll(profitable) {
 
     const enriched = await Promise.all(
         profitable.map(async item => {
-            const stats = await fetchItem(item.hash_name);
+            const stats = await fetchItem(item.hash_name, config.debug);
             const avgStats = averageStats(stats);
             const avgPerDay = avgStats[0];
             const avgPrice = avgStats[1];
