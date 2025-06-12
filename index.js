@@ -1,6 +1,6 @@
 const yargs = require('yargs/yargs');
 const {hideBin} = require('yargs/helpers');
-const {describe, boolean} = require('yargs');
+const {describe, boolean, number} = require('yargs');
 
 const argv = yargs(hideBin(process.argv))
     .usage('Usage: $0 [options]')
@@ -60,6 +60,7 @@ const DEBUG = argv.debug;
 const PAGE_SIZE = 100;
 const FEE_RATE = 0.15;
 const GENERAL_PRICE_DIVIDER = 100_000_000;
+const ITEM_PRICE_DIVIDER = 10_000;
 const SMALLEST_PRICE_STEP = 0.01;
 const EPOCH_MULTIPLIER = 1_000;
 
@@ -145,7 +146,10 @@ function averageStats(transact) {
     const secondsPerDay = 86400000 / EPOCH_MULTIPLIER;
     const daysSpan = timeSpanSec / secondsPerDay;
     const avgTransactCount = roundTo(totalCount / (daysSpan || 1), 1);
-    const avgTransactValue = roundTo(totalCount / totalValue, 3);
+    const avgTransactValue = roundTo(
+        totalValue / totalCount / ITEM_PRICE_DIVIDER,
+        3
+    );
     return [avgTransactCount, avgTransactValue];
 }
 
@@ -237,23 +241,20 @@ async function enrichAll(profitable) {
         const profitable = items
             .map(item => {
                 const price = item.price / GENERAL_PRICE_DIVIDER;
-                const buy = roundTo(
-                    item.buy_price / GENERAL_PRICE_DIVIDER +
-                        SMALLEST_PRICE_STEP,
-                    2
-                );
-                const proceeds = roundTo(
-                    (price - SMALLEST_PRICE_STEP) * (1 - FEE_RATE),
-                    2
-                );
-                const number = Math.floor(BALANCE / buy);
-                const profit = roundTo((proceeds - buy) * number, 2);
+                const buy = roundTo(item.buy_price / GENERAL_PRICE_DIVIDER, 2);
+                const actualBuy = roundTo(buy + SMALLEST_PRICE_STEP, 2);
+                const actualPrice = price - SMALLEST_PRICE_STEP;
+                const proceeds = roundTo(actualPrice * (1 - FEE_RATE), 2);
+                const number = Math.floor(BALANCE / actualBuy);
+                const profit = roundTo((proceeds - actualBuy) * number, 2);
+                const mid = roundTo((actualBuy + actualPrice) / 2, 3);
                 return {
                     hash_name: item.hash_name,
                     name: item.name,
-                    buy_price: buy,
+                    buy_price: actualBuy,
                     number: number,
                     profit: profit,
+                    mid: mid,
                 };
             })
             .filter(
@@ -268,8 +269,23 @@ async function enrichAll(profitable) {
 
         // compute score as weighted sum
         enriched.forEach(item => {
+            const priceProximity = roundTo(
+                item.mid === 0
+                    ? 0
+                    : Math.max(
+                          0,
+                          1 -
+                              Math.abs(item.avgValuePerTransaction - item.mid) /
+                                  item.mid
+                      ),
+                4
+            );
+
+            item.priceProximity = priceProximity;
             item.score = roundTo(
-                0.6 * item.avgTransactionsPerDay + 0.4 * item.profit,
+                0.4 * item.avgTransactionsPerDay +
+                    0.5 * item.profit +
+                    0.1 * priceProximity,
                 3
             );
         });
@@ -279,8 +295,18 @@ async function enrichAll(profitable) {
             .sort((a, b) => b.score - a.score)
             .slice(0, TOP_COUNT);
 
-        if (top.length > 0) {
-            console.table(top);
+        const presentation = top.map(item => {
+            return {
+                hash_name: item.hash_name,
+                name: item.name,
+                buy_price: item.buy_price,
+                number: item.number,
+                score: item.score,
+            };
+        });
+
+        if (presentation.length > 0) {
+            console.table(presentation);
         }
     } catch (err) {
         console.error(err);
