@@ -137,14 +137,16 @@ async function fetchItem(item) {
     return payload.response['1h'];
 }
 
-function averageTransactionPerDay(transactions) {
-    if (!transactions.length) return 0;
-    const timeSpanSec =
-        transactions[transactions.length - 1][0] - transactions[0][0];
-    const totalCount = transactions.reduce((acc, cur) => acc + cur[2], 0);
+function averageStats(transact) {
+    if (!transact.length) return 0;
+    const timeSpanSec = transact[transact.length - 1][0] - transact[0][0];
+    const totalValue = transact.reduce((acc, cur) => acc + cur[1], 0);
+    const totalCount = transact.reduce((acc, cur) => acc + cur[2], 0);
     const secondsPerDay = 86400000 / EPOCH_MULTIPLIER;
     const daysSpan = timeSpanSec / secondsPerDay;
-    return roundTo(totalCount / (daysSpan || 1), 1);
+    const avgTransactCount = roundTo(totalCount / (daysSpan || 1), 1);
+    const avgTransactValue = roundTo(totalCount / totalValue, 3);
+    return [avgTransactCount, avgTransactValue];
 }
 
 async function fetchAllItems(pages = 1, pageSize = PAGE_SIZE) {
@@ -200,12 +202,18 @@ async function enrichAll(profitable) {
     const enriched = await Promise.all(
         profitable.map(async item => {
             const stats = await fetchItem(item.hash_name);
-            const avgPerDay = averageTransactionPerDay(stats);
+            const avgStats = averageStats(stats);
+            const avgPerDay = avgStats[0];
+            const avgPrice = avgStats[1];
 
             completed += 1;
             drawProgress(completed);
 
-            return {...item, avgTransactionsPerDay: avgPerDay};
+            return {
+                ...item,
+                avgTransactionsPerDay: avgPerDay,
+                avgValuePerTransaction: avgPrice,
+            };
         })
     );
 
