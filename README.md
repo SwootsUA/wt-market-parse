@@ -4,8 +4,13 @@ A simple script to find profitable items on the Gaijin market.
 
 ## Setup
 
-1. Copy `index.js` into a folder.
-2. Create a `.env` file in the same folder:
+1. Clone the repository:
+
+   ```bash
+   git clone https://github.com/SwootsUA/wt-market-parse.git
+   cd wt-market-parse
+   ```
+2. Create a `.env` file in the project root:
 
     ```dotenv
     WT_TOKEN=your_token_here
@@ -21,11 +26,11 @@ A simple script to find profitable items on the Gaijin market.
 ## Usage
 
 ```bash
-node index.js --pages <num>
-               --profit <num> \
-               --balance <num> \
-               --top <num> \
-               [--print] [--debug] [--no-name] [--all-info]
+node index.js --pages <num> \
+              --profit <num> \
+              --balance <num> \
+              --top <num> \
+              [--print] [--debug] [--show-name] [--all-info]
 ```
 
 -   `--pages, -p` Number of pages to fetch (default: 1)
