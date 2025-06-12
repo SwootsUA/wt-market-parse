@@ -1,0 +1,74 @@
+const yargs = require('yargs/yargs');
+const {hideBin} = require('yargs/helpers');
+
+module.exports = () => {
+    const argv = yargs(hideBin(process.argv))
+        .usage('Usage: $0 [options]')
+        .options({
+            pages: {
+                alias: 'p',
+                type: 'number',
+                default: 1,
+                describe: 'Number of item pages to fetch',
+            },
+            profit: {
+                alias: 'r',
+                type: 'number',
+                default: 0.1,
+                describe: 'Minimum profit required per item',
+            },
+            balance: {
+                alias: 'b',
+                type: 'number',
+                default: 1.0,
+                describe: 'Your available balance',
+            },
+            top: {
+                alias: 't',
+                type: 'number',
+                default: 10,
+                describe: 'Number of top items to display by score',
+            },
+            print: {
+                alias: 'i',
+                type: 'boolean',
+                default: false,
+                describe: 'Print the first item fetched fully',
+            },
+            debug: {
+                alias: 'd',
+                type: 'boolean',
+                default: false,
+                describe: 'Print out warnings during script execution',
+            },
+            'no-name': {
+                alias: 'nn',
+                type: 'boolean',
+                default: false,
+                describe: 'Remove name from final table',
+            },
+            'all-info': {
+                alias: 'a',
+                type: 'boolean',
+                default: false,
+                describe: 'Print all data in final table',
+            },
+        })
+        .check(o => {
+            if ([o.pages, o.profit, o.balance, o.top].some(isNaN))
+                throw new Error('Invalid numeric input');
+            return true;
+        })
+        .help().argv;
+
+    return {
+        pages: argv.pages,
+        profit: argv.profit,
+        balance: argv.balance,
+        top: argv.top,
+        printOne: argv.print,
+        debug: argv.debug,
+        noName: argv.noName,
+        allInfo: argv.allInfo,
+    };
+};

@@ -1,75 +1,4 @@
-const yargs = require('yargs/yargs');
-const {hideBin} = require('yargs/helpers');
-const {describe, boolean, number, alias} = require('yargs');
-
-const argv = yargs(hideBin(process.argv))
-    .usage('Usage: $0 [options]')
-    .options({
-        pages: {
-            alias: 'p',
-            describe: 'Number of item pages to fetch',
-            type: 'number',
-            default: 1,
-        },
-        profit: {
-            alias: 'r',
-            describe: 'Minimum profit required per item',
-            type: 'number',
-            default: 0.1,
-        },
-        balance: {
-            alias: 'b',
-            describe: 'Your available balance',
-            type: 'number',
-            default: 1.0,
-        },
-        top: {
-            alias: 't',
-            describe: 'Number of top items to display by score',
-            type: 'number',
-            default: 10,
-        },
-        print: {
-            alias: 'i',
-            describe: 'Print the first item fetched fully',
-            type: 'boolean',
-            default: false,
-        },
-        debug: {
-            alias: 'd',
-            describe: 'Print out warnings during script execution',
-            type: 'boolean',
-            default: false,
-        },
-        'no-name': {
-            alias: 'nn',
-            describe: 'Remove name from final table',
-            type: 'boolean',
-            default: false,
-        },
-        'all-info': {
-            alias: 'a',
-            describe: 'Print all data in final table',
-            type: 'boolean',
-            default: false,
-        },
-    })
-    .check(argv => {
-        if ([argv.pages, argv.profit, argv.balance, argv.top].some(isNaN)) {
-            throw new Error('❌ Invalid numeric input. See --help.');
-        }
-        return true;
-    })
-    .help().argv;
-
-const PAGES_COUNT = argv.pages;
-const PROFIT_THRESHOLD = argv.profit;
-const BALANCE = argv.balance;
-const TOP_COUNT = argv.top;
-const PRINT_ITEM = argv.print;
-const DEBUG = argv.debug;
-const NO_NAME = argv.noName;
-const ALL_INFO = argv.allInfo;
+const config = require('./cli')();
 
 const PAGE_SIZE = 100;
 const FEE_RATE = 0.15;
@@ -131,13 +60,13 @@ async function fetchItem(item) {
     try {
         payload = await res.json();
     } catch (error) {
-        if (DEBUG) {
+        if (config.debug) {
             console.error(`Bad item ${item}: ${error}, ${res}`);
         }
         return [[0, 0, 0]];
     }
     if (!payload.response || !payload.response['1h']) {
-        if (DEBUG) {
+        if (config.debug) {
             console.error(`Bad item ${item}: ${JSON.stringify(payload)}`);
         }
         return [[0, 0, 0]];
@@ -246,9 +175,9 @@ async function enrichAll(profitable) {
 
 (async () => {
     try {
-        const items = await fetchAllItems(PAGES_COUNT);
+        const items = await fetchAllItems(config.pages);
 
-        if (PRINT_ITEM) {
+        if (config.printOne) {
             console.log(items[0]);
         }
 
@@ -259,7 +188,7 @@ async function enrichAll(profitable) {
                 const actualBuy = roundTo(buy + SMALLEST_PRICE_STEP, 2);
                 const actualPrice = price - SMALLEST_PRICE_STEP;
                 const proceeds = roundTo(actualPrice * (1 - FEE_RATE), 2);
-                const number = Math.floor(BALANCE / actualBuy);
+                const number = Math.floor(config.balance / actualBuy);
                 const profit = roundTo((proceeds - actualBuy) * number, 2);
                 const mid = roundTo((actualBuy + actualPrice) / 2, 3);
                 return {
@@ -273,7 +202,7 @@ async function enrichAll(profitable) {
             })
             .filter(
                 i =>
-                    i.profit / i.number > PROFIT_THRESHOLD &&
+                    i.profit / i.number > config.profit &&
                     i.number > 0 &&
                     i.buy_price > 0.1 &&
                     !i.name.includes(' key')
@@ -307,7 +236,7 @@ async function enrichAll(profitable) {
         // sort by score, take top N
         const top = enriched
             .sort((a, b) => b.score - a.score)
-            .slice(0, TOP_COUNT);
+            .slice(0, config.top);
 
         const presentation = top.map(item => {
             const obj = {
@@ -316,13 +245,13 @@ async function enrichAll(profitable) {
                 number: item.number,
                 score: item.score,
             };
-            if (!NO_NAME) {
+            if (!config.noName) {
                 obj.name = item.name;
             }
             return obj;
         });
 
-        if (ALL_INFO) {
+        if (config.allInfo) {
             if (top.length > 0) {
                 console.table(top);
             }
