@@ -14,23 +14,24 @@ A simple script to find profitable items on the Gaijin market.
 
    ```bash
    npm init -y
-   npm install dotenv
+   npm install dotenv yargs
    ```
 
 ## Usage
 
 ```bash
-node index.js [PAGES] [PROFIT] [PRINT] [BALANCE]
+node index.js --pages <num> --profit <num> --balance <num> --top <num> [--print]
 ```
 
-* `PAGES` — number of pages (100 items each), default: `1`
-* `PROFIT` — minimum profit per item, default: `0.1`
-* `PRINT` — `true` to log the first item, default: `false`
-* `BALANCE` — maximum buy price you can afford, default: `1.00`
+* `--pages, -p`      Number of pages to fetch (default: 1)
+* `--profit, -r`     Minimum profit per item (default: 0.1)
+* `--balance, -b`    Maximum buy price you can afford (default: 1.00)
+* `--top, -t`        Number of top items to display by score (default: 10)
+* `--print, -i`      Print the first item fetched (optional)
 
-### Example
+## Example
 
 ```bash
-node index.js 2 0.2 false 5.00
+# fetch 2 pages, require at least 0.2 profit, balance 5.00, show top 15
+node index.js -p 2 -r 0.2 -b 5.00 -t 15
 ```
-

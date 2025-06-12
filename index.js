@@ -1,31 +1,53 @@
-if (process.argv.includes('--help') || process.argv.includes('-h')) {
-    console.log(`
-Usage:
-  node index.js [PAGES_COUNT] [PROFIT_THRESHOLD] [PRINT_ITEM] [BALANCE] [TOP_COUNT]
+const yargs = require('yargs/yargs');
+const {hideBin} = require('yargs/helpers');
 
-Arguments:
-  PAGES_COUNT       Number of item pages to fetch (default: 1)
-  PROFIT_THRESHOLD  Minimum profit required per item (default: 0.1)
-  PRINT_ITEM        Whether to print the first item (default: false)
-  BALANCE           Your available balance (default: 1.00)
-  TOP_COUNT         Number of top items to display by score (default: 10)
+const argv = yargs(hideBin(process.argv))
+    .usage('Usage: $0 [options]')
+    .options({
+        pages: {
+            alias: 'p',
+            describe: 'Number of item pages to fetch',
+            type: 'number',
+            default: 1,
+        },
+        profit: {
+            alias: 'r',
+            describe: 'Minimum profit required per item',
+            type: 'number',
+            default: 0.1,
+        },
+        balance: {
+            alias: 'b',
+            describe: 'Your available balance',
+            type: 'number',
+            default: 1.0,
+        },
+        top: {
+            alias: 't',
+            describe: 'Number of top items to display by score',
+            type: 'number',
+            default: 10,
+        },
+        print: {
+            alias: 'i',
+            describe: 'Print the first item fetched fully',
+            type: 'boolean',
+            default: false,
+        },
+    })
+    .check(argv => {
+        if ([argv.pages, argv.profit, argv.balance, argv.top].some(isNaN)) {
+            throw new Error('❌ Invalid numeric input. See --help.');
+        }
+        return true;
+    })
+    .help().argv;
 
-Example:
-  node index.js 3 0.2 true 5.00 15
-    `);
-    process.exit(0);
-}
-
-const PAGES_COUNT = Number(process.argv[2]) || 1;
-const PROFIT_THRESHOLD = Number(process.argv[3]) || 0.1;
-const PRINT_ITEM = process.argv[4] === 'true';
-const BALANCE = Number(process.argv[5]) || 1.0;
-const TOP_COUNT = Number(process.argv[6]) || 10;
-
-if (isNaN(PAGES_COUNT) || isNaN(PROFIT_THRESHOLD) || isNaN(BALANCE)) {
-    console.error('❌ Invalid input. Use --help to see valid arguments.');
-    process.exit(1);
-}
+const PAGES_COUNT = argv.pages;
+const PROFIT_THRESHOLD = argv.profit;
+const BALANCE = argv.balance;
+const TOP_COUNT = argv.top;
+const PRINT_ITEM = argv.print;
 
 const PAGE_SIZE = 100;
 const FEE_RATE = 0.15;
