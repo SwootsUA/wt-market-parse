@@ -27,14 +27,26 @@ const PRICE_STEP = 0.01;
     try {
         // 1) Fetch all pages
         const barPages = makeBarDrawer(config.pages, 20, 'Fetching market');
-        const fetches = Array.from({length: config.pages}, (_, i) =>
-            fetchPage(i * 100, 100).then(res => {
-                barPages.tick();
-                return res;
-            })
+        const tasks = Array.from({length: config.pages}, (_, i) =>
+            fetchPage(i * 100, 100)
+                .then(res => {
+                    barPages.tick();
+                    return res;
+                })
+                .catch(err => {
+                    if (config.debug) {
+                        console.error(
+                            `⚠️ Page fetch #${i} failed:`,
+                            err.message
+                        );
+                    }
+                    barPages.tick();
+                    return [];
+                })
         );
-        const results = await Promise.all(fetches);
-        const allAssets = results.flat();
+
+        const pages = await Promise.all(tasks);
+        const allAssets = pages.flat();
 
         if (config.printOne && allAssets.length) {
             console.log(allAssets[0]);
