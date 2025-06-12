@@ -1,6 +1,6 @@
 const yargs = require('yargs/yargs');
 const {hideBin} = require('yargs/helpers');
-const {describe, boolean, number} = require('yargs');
+const {describe, boolean, number, alias} = require('yargs');
 
 const argv = yargs(hideBin(process.argv))
     .usage('Usage: $0 [options]')
@@ -41,6 +41,18 @@ const argv = yargs(hideBin(process.argv))
             type: 'boolean',
             default: false,
         },
+        'no-name': {
+            alias: 'nn',
+            describe: 'Remove name from final table',
+            type: 'boolean',
+            default: false,
+        },
+        'all-info': {
+            alias: 'a',
+            describe: 'Print all data in final table',
+            type: 'boolean',
+            default: false,
+        },
     })
     .check(argv => {
         if ([argv.pages, argv.profit, argv.balance, argv.top].some(isNaN)) {
@@ -56,6 +68,8 @@ const BALANCE = argv.balance;
 const TOP_COUNT = argv.top;
 const PRINT_ITEM = argv.print;
 const DEBUG = argv.debug;
+const NO_NAME = argv.noName;
+const ALL_INFO = argv.allInfo;
 
 const PAGE_SIZE = 100;
 const FEE_RATE = 0.15;
@@ -296,17 +310,26 @@ async function enrichAll(profitable) {
             .slice(0, TOP_COUNT);
 
         const presentation = top.map(item => {
-            return {
+            const obj = {
                 hash_name: item.hash_name,
-                name: item.name,
                 buy_price: item.buy_price,
                 number: item.number,
                 score: item.score,
             };
+            if (!NO_NAME) {
+                obj.name = item.name;
+            }
+            return obj;
         });
 
-        if (presentation.length > 0) {
-            console.table(presentation);
+        if (ALL_INFO) {
+            if (top.length > 0) {
+                console.table(top);
+            }
+        } else {
+            if (presentation.length > 0) {
+                console.table(presentation);
+            }
         }
     } catch (err) {
         console.error(err);
