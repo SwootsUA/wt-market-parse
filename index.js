@@ -197,7 +197,12 @@ async function enrichAll(profitable) {
         process.stdout.write(`\r${bar}`);
     }
 
-    drawProgress(0);
+    if (total === 0) {
+        console.log('There is no items to fetch...');
+        return [];
+    } else {
+        drawProgress(0);
+    }
 
     const enriched = await Promise.all(
         profitable.map(async item => {
@@ -274,7 +279,9 @@ async function enrichAll(profitable) {
             .sort((a, b) => b.score - a.score)
             .slice(0, TOP_COUNT);
 
-        console.table(top);
+        if (top.length > 0) {
+            console.table(top);
+        }
     } catch (err) {
         console.error(err);
     }
