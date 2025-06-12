@@ -161,14 +161,13 @@ function roundTo(number, precision) {
                 const avgPerDay = averageTransactionPerDay(stats);
                 return {...item, avgTransactionsPerDay: avgPerDay};
             })
-        );
-
-        console.log(
-            'Profitable items:',
-            enriched.sort(
+        ).then(array =>
+            array.sort(
                 (a, b) => b.avgTransactionsPerDay - a.avgTransactionsPerDay
             )
         );
+
+        console.log('Profitable items:', enriched);
     } catch (err) {
         console.error(err);
     }
