@@ -1,16 +1,17 @@
 if (process.argv.includes('--help') || process.argv.includes('-h')) {
     console.log(`
 Usage:
-  node index.js [ITEMS_COUNT] [PROFIT_THRESHOLD] [PRINT_ITEM] [BALANCE]
+  node index.js [PAGES_COUNT] [PROFIT_THRESHOLD] [PRINT_ITEM] [BALANCE] [TOP_COUNT]
 
 Arguments:
   PAGES_COUNT       Number of item pages to fetch (default: 1)
   PROFIT_THRESHOLD  Minimum profit required per item (default: 0.1)
   PRINT_ITEM        Whether to print the first item (default: false)
   BALANCE           Your available balance (default: 1.00)
+  TOP_COUNT         Number of top items to display by score (default: 10)
 
 Example:
-  node index.js 3 0.2 true 5.00
+  node index.js 3 0.2 true 5.00 15
     `);
     process.exit(0);
 }
@@ -19,6 +20,7 @@ const PAGES_COUNT = Number(process.argv[2]) || 1;
 const PROFIT_THRESHOLD = Number(process.argv[3]) || 0.1;
 const PRINT_ITEM = process.argv[4] === 'true';
 const BALANCE = Number(process.argv[5]) || 1.0;
+const TOP_COUNT = Number(process.argv[6]) || 10;
 
 if (isNaN(PAGES_COUNT) || isNaN(PROFIT_THRESHOLD) || isNaN(BALANCE)) {
     console.error('❌ Invalid input. Use --help to see valid arguments.');
@@ -161,13 +163,20 @@ function roundTo(number, precision) {
                 const avgPerDay = averageTransactionPerDay(stats);
                 return {...item, avgTransactionsPerDay: avgPerDay};
             })
-        ).then(array =>
-            array.sort(
-                (a, b) => b.avgTransactionsPerDay - a.avgTransactionsPerDay
-            )
         );
 
-        console.log('Profitable items:', enriched);
+        // compute score as weighted sum
+        enriched.forEach(item => {
+            item.score = 0.6 * item.avgTransactionsPerDay + 0.4 * item.profit;
+        });
+
+        // sort by score, take top N
+        const top = enriched
+            .sort((a, b) => b.score - a.score)
+            .slice(0, TOP_COUNT);
+
+        console.log(`Top ${TOP_COUNT} items:`);
+        console.table(top);
     } catch (err) {
         console.error(err);
     }
