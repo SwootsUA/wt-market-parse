@@ -176,7 +176,8 @@ function roundTo(number, precision) {
                 i =>
                     i.profit > PROFIT_THRESHOLD &&
                     i.buy_price <= BALANCE &&
-                    i.buy_price > 0.1
+                    i.buy_price > 0.1 &&
+                    !i.name.includes(' key')
             );
 
         const enriched = await Promise.all(
