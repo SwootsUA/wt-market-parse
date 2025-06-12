@@ -20,7 +20,7 @@ A simple script to find profitable items on the Gaijin market.
 ## Usage
 
 ```bash
-node index.js --pages <num> --profit <num> --balance <num> --top <num> [--print]
+node index.js --pages <num> --profit <num> --balance <num> --top <num> [--print] [--debug]
 ```
 
 * `--pages, -p`      Number of pages to fetch (default: 1)
