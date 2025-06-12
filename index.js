@@ -162,7 +162,7 @@ async function fetchAllItems(pages = 1, pageSize = PAGE_SIZE) {
         const emptyBars = barWidth - filledBars;
 
         const bar =
-            'Fetching: [' +
+            'Fetching market: [' +
             '#'.repeat(filledBars) +
             '.'.repeat(emptyBars) +
             `] ${(pct * 100).toFixed(0)}%`;
@@ -170,12 +170,47 @@ async function fetchAllItems(pages = 1, pageSize = PAGE_SIZE) {
         process.stdout.write(`\r${bar}`);
     }
 
-    process.stdout.write('\nComputing...\n');
+    process.stdout.write('\n');
 
     return allAssets;
 }
 function roundTo(number, precision) {
     return Math.round(number * 10 ** precision) / 10 ** precision;
+}
+
+async function enrichAll(profitable) {
+    const total = profitable.length;
+    let completed = 0;
+    const barWidth = 20;
+
+    function drawProgress(count) {
+        const pct = count / total;
+        const filled = Math.round(pct * barWidth);
+        const empty = barWidth - filled;
+        const bar =
+            'Fetching items: [' +
+            '#'.repeat(filled) +
+            '.'.repeat(empty) +
+            `] ${(pct * 100).toFixed(0)}%`;
+        process.stdout.write(`\r${bar}`);
+    }
+
+    drawProgress(0);
+
+    const enriched = await Promise.all(
+        profitable.map(async item => {
+            const stats = await fetchItem(item.hash_name);
+            const avgPerDay = averageTransactionPerDay(stats);
+
+            completed += 1;
+            drawProgress(completed);
+
+            return {...item, avgTransactionsPerDay: avgPerDay};
+        })
+    );
+
+    process.stdout.write('\n');
+    return enriched;
 }
 
 (async () => {
@@ -216,13 +251,7 @@ function roundTo(number, precision) {
                     !i.name.includes(' key')
             );
 
-        const enriched = await Promise.all(
-            profitable.map(async item => {
-                const stats = await fetchItem(item.hash_name);
-                const avgPerDay = averageTransactionPerDay(stats);
-                return {...item, avgTransactionsPerDay: avgPerDay};
-            })
-        );
+        const enriched = await enrichAll(profitable);
 
         // compute score as weighted sum
         enriched.forEach(item => {
