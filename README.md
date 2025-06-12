@@ -7,32 +7,46 @@ A simple script to find profitable items on the Gaijin market.
 1. Copy `index.js` into a folder.
 2. Create a `.env` file in the same folder:
 
-   ```dotenv
-   WT_TOKEN=your_token_here
-   ```
+    ```dotenv
+    WT_TOKEN=your_token_here
+    ```
+
 3. Install dependencies:
 
-   ```bash
-   npm init -y
-   npm install dotenv yargs
-   ```
+    ```bash
+    npm init -y
+    npm install dotenv yargs
+    ```
 
 ## Usage
 
 ```bash
-node index.js --pages <num> --profit <num> --balance <num> --top <num> [--print] [--debug]
+node index.js --pages <num>
+               --profit <num> \
+               --balance <num> \
+               --top <num> \
+               [--print] [--debug] [--no-name] [--all-info]
 ```
 
-* `--pages, -p`      Number of pages to fetch (default: 1)
-* `--profit, -r`     Minimum profit per item (default: 0.1)
-* `--balance, -b`    Maximum buy price you can afford (default: 1.00)
-* `--top, -t`        Number of top items to display by score (default: 10)
-* `--print, -i`      Print the first item fetched (optional)
-* `--debug, -d`      Print out warnings during execution (optional)
+*   `--pages, -p` Number of pages to fetch (default: 1)
+*   `--profit, -r` Minimum profit per item (default: 0.1)
+*   `--balance, -b` Your account balance (default: 1.00)
+*   `--top, -t` Number of top items to display by score (default: 10)
+*   `--print, -i` Print the first item fetched (optional)
+*   `--debug, -d` Print out warnings during execution (optional)
+*   `--no-name, -nn` Omit item names from the final output table (optional)
+*   `--all-info, -a` Include all enriched data in the final table (optional)
 
-## Example
+## Examples
+
+Fetch 2 pages, require at least 0.2 profit, balance 5.00, show top 15 without names:
 
 ```bash
-# fetch 2 pages, require at least 0.2 profit, balance 5.00, show top 15
-node index.js -p 2 -r 0.2 -b 5.00 -t 15
+node index.js -p 2 -r 0.2 -b 5.00 -t 15 --no-name
+```
+
+Fetch 3 pages, show full enriched info for top 5:
+
+```bash
+node index.js --pages 3 --top 5 --all-info
 ```
