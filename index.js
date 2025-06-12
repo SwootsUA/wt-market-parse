@@ -149,17 +149,31 @@ function averageTransactionPerDay(transactions) {
 
 async function fetchAllItems(pages = 1, pageSize = PAGE_SIZE) {
     const allAssets = [];
+    const barWidth = 20; // total characters in the bar
 
     for (let i = 0; i < pages; i++) {
         const skip = i * pageSize;
-        console.log(`Fetching items ${skip}–${skip + pageSize - 1}…`);
         const pageAssets = await fetchPage(skip, pageSize);
         allAssets.push(...pageAssets);
+
+        const completed = i + 1;
+        const pct = completed / pages;
+        const filledBars = Math.round(pct * barWidth);
+        const emptyBars = barWidth - filledBars;
+
+        const bar =
+            'Fetching: [' +
+            '#'.repeat(filledBars) +
+            '.'.repeat(emptyBars) +
+            `] ${(pct * 100).toFixed(0)}%`;
+
+        process.stdout.write(`\r${bar}`);
     }
+
+    process.stdout.write('\nComputing...\n');
 
     return allAssets;
 }
-
 function roundTo(number, precision) {
     return Math.round(number * 10 ** precision) / 10 ** precision;
 }
