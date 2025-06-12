@@ -1,165 +1,116 @@
 const config = require('./cli')();
 const {fetchPage, fetchItem} = require('./fetcher');
 const {averageStats} = require('./stats');
+const {makeBarDrawer} = require('./progress');
+const {scoreItem} = require('./score');
 
-const PAGE_SIZE = 100;
-const FEE_RATE = 0.15;
-const GENERAL_PRICE_DIVIDER = 100_000_000;
-const SMALLEST_PRICE_STEP = 0.01;
-
-async function fetchAllItems(pages = 1, pageSize = PAGE_SIZE) {
-    const allAssets = [];
-    const barWidth = 20; // total characters in the bar
-
-    for (let i = 0; i < pages; i++) {
-        const skip = i * pageSize;
-        const pageAssets = await fetchPage(skip, pageSize);
-        allAssets.push(...pageAssets);
-
-        const completed = i + 1;
-        const pct = completed / pages;
-        const filledBars = Math.round(pct * barWidth);
-        const emptyBars = barWidth - filledBars;
-
-        const bar =
-            'Fetching market: [' +
-            '#'.repeat(filledBars) +
-            '.'.repeat(emptyBars) +
-            `] ${(pct * 100).toFixed(0)}%`;
-
-        process.stdout.write(`\r${bar}`);
-    }
-
-    process.stdout.write('\n');
-
-    return allAssets;
-}
-function roundTo(number, precision) {
-    return Math.round(number * 10 ** precision) / 10 ** precision;
-}
-
-async function enrichAll(profitable) {
-    const total = profitable.length;
-    let completed = 0;
-    const barWidth = 20;
-
-    function drawProgress(count) {
-        const pct = count / total;
-        const filled = Math.round(pct * barWidth);
-        const empty = barWidth - filled;
-        const bar =
-            'Fetching items: [' +
-            '#'.repeat(filled) +
-            '.'.repeat(empty) +
-            `] ${(pct * 100).toFixed(0)}%`;
-        process.stdout.write(`\r${bar}`);
-    }
-
-    if (total === 0) {
-        console.log('There is no items to fetch...');
-        return [];
-    } else {
-        drawProgress(0);
-    }
-
-    const enriched = await Promise.all(
-        profitable.map(async item => {
-            const stats = await fetchItem(item.hash_name, config.debug);
-            const avgStats = averageStats(stats);
-            const avgPerDay = avgStats[0];
-            const avgPrice = avgStats[1];
-
-            completed += 1;
-            drawProgress(completed);
-
-            return {
-                ...item,
-                avgTransactionsPerDay: avgPerDay,
-                avgValuePerTransaction: avgPrice,
-            };
-        })
-    );
-
-    process.stdout.write('\n');
-    return enriched;
-}
-
+// simple pick helper so we don't need lodash
 function pick(obj, keys) {
-    return keys.reduce((out, key) => {
-        if (key in obj) out[key] = obj[key];
+    return keys.reduce((out, k) => {
+        if (k in obj) out[k] = obj[k];
         return out;
     }, {});
 }
 
+// helper to round to N significant figures
+function roundSig(x, sig = 3) {
+    if (typeof x !== 'number' || x === 0) return x;
+    // toPrecision returns a string, so we parse it back
+    return parseFloat(x.toPrecision(sig));
+}
+
+const FEE_RATE = 0.15;
+const PRICE_DIVIDER = 100_000_000;
+const PRICE_STEP = 0.01;
+
 (async () => {
     try {
-        const items = await fetchAllItems(config.pages);
-
-        if (config.printOne) {
-            console.log(items[0]);
+        // 1) Fetch all pages
+        const allAssets = [];
+        const barPages = makeBarDrawer(config.pages, 20, 'Fetching market');
+        for (let i = 0; i < config.pages; i++) {
+            const page = await fetchPage(i * 100, 100);
+            allAssets.push(...page);
+            barPages.tick();
         }
 
-        const profitable = items
+        if (config.printOne && allAssets.length) {
+            console.log(allAssets[0]);
+        }
+
+        // 2) Filter for profitable candidates
+        const candidates = allAssets
             .map(item => {
-                const price = item.price / GENERAL_PRICE_DIVIDER;
-                const buy = roundTo(item.buy_price / GENERAL_PRICE_DIVIDER, 2);
-                const actualBuy = roundTo(buy + SMALLEST_PRICE_STEP, 2);
-                const actualPrice = price - SMALLEST_PRICE_STEP;
-                const proceeds = roundTo(actualPrice * (1 - FEE_RATE), 2);
-                const number = Math.floor(config.balance / actualBuy);
-                const profit = roundTo((proceeds - actualBuy) * number, 2);
-                const mid = roundTo((actualBuy + actualPrice) / 2, 3);
+                const sellPrice = item.price / PRICE_DIVIDER;
+                const buyPrice = item.buy_price / PRICE_DIVIDER + PRICE_STEP;
+                const proceeds = (sellPrice - PRICE_STEP) * (1 - FEE_RATE);
+                const count = Math.floor(config.balance / buyPrice);
+                const profit = (proceeds - buyPrice) * count;
+
                 return {
                     hash_name: item.hash_name,
                     name: item.name,
-                    buy_price: actualBuy,
-                    number: number,
-                    profit: profit,
-                    mid: mid,
+                    buyPrice,
+                    sellPrice,
+                    number: count,
+                    profit,
                 };
             })
             .filter(
                 i =>
-                    i.profit / i.number > config.profit &&
                     i.number > 0 &&
-                    i.buy_price > 0.1 &&
+                    i.profit / i.number > config.profit &&
+                    i.buyPrice > 0.1 &&
                     !i.name.includes(' key')
             );
 
-        const enriched = await enrichAll(profitable);
+        // 3) Enrich with stats
+        const barItems = makeBarDrawer(candidates.length, 20, 'Fetching items');
+        const enriched = await Promise.all(
+            candidates.map(async it => {
+                const stats = await fetchItem(it.hash_name);
+                const [avgCount, avgValue] = averageStats(stats);
+                barItems.tick();
+                return {
+                    ...it,
+                    dailyTx: avgCount,
+                    txPrice: avgValue,
+                };
+            })
+        );
 
-        // compute score as weighted sum
-        enriched.forEach(item => {
-            const priceProximity = roundTo(
-                item.mid === 0
-                    ? 0
-                    : Math.max(
-                          0,
-                          1 -
-                              Math.abs(item.avgValuePerTransaction - item.mid) /
-                                  item.mid
-                      ),
-                4
-            );
-
-            item.priceProximity = priceProximity;
-            item.score = roundTo(
-                0.4 * item.avgTransactionsPerDay +
-                    0.5 * item.profit +
-                    0.1 * priceProximity,
-                3
-            );
+        // 4) Score each item
+        enriched.forEach(it => {
+            it.score = scoreItem({
+                dailyTx: it.dailyTx,
+                profit: it.profit,
+                txPrice: it.txPrice,
+                buyPrice: it.buyPrice,
+                sellPrice: it.sellPrice,
+            });
         });
 
-        const top = enriched
-            .sort((a, b) => b.score - a.score)
-            .slice(0, config.top);
+        // 5) Sort
+        const sorted = enriched.sort((a, b) => b.score - a.score);
 
-        const cols = ['hash_name', 'buyPrice', 'profit', 'score'];
-        if (!config.noName) cols.push('name');
-        console.table(
-            config.allInfo ? enriched : top.map(it => pick(it, cols))
-        );
+        const cols = ['hash_name', 'buyPrice', 'number', 'profit', 'score'];
+        if (config.showName) cols.push('name');
+
+        const top = sorted.slice(0, config.top).map(item => pick(item, cols));
+        const raw = config.allInfo ? sorted : top;
+
+        const display = raw.map(item => {
+            const o = {...item};
+            Object.entries(o).forEach(([k, v]) => {
+                if (typeof v === 'number') {
+                    o[k] = roundSig(v, 3);
+                }
+            });
+            return o;
+        });
+
+        // 6) Show
+        console.table(display);
     } catch (err) {
         console.error(err);
     }

@@ -41,11 +41,11 @@ module.exports = () => {
                 default: false,
                 describe: 'Print out warnings during script execution',
             },
-            'no-name': {
-                alias: 'nn',
+            'show-name': {
+                alias: 'n',
                 type: 'boolean',
                 default: false,
-                describe: 'Remove name from final table',
+                describe: 'Add name to the final table',
             },
             'all-info': {
                 alias: 'a',
@@ -68,7 +68,7 @@ module.exports = () => {
         top: argv.top,
         printOne: argv.print,
         debug: argv.debug,
-        noName: argv.noName,
+        showName: argv.showName,
         allInfo: argv.allInfo,
     };
 };
