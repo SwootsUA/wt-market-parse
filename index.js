@@ -167,7 +167,10 @@ function roundTo(number, precision) {
 
         // compute score as weighted sum
         enriched.forEach(item => {
-            item.score = 0.6 * item.avgTransactionsPerDay + 0.4 * item.profit;
+            item.score = roundTo(
+                0.6 * item.avgTransactionsPerDay + 0.4 * item.profit,
+                3
+            );
         });
 
         // sort by score, take top N
