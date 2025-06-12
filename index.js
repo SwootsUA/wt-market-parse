@@ -1,27 +1,11 @@
 const config = require('./cli')();
 const {fetchPage, fetchItem} = require('./fetcher');
+const {averageStats} = require('./stats');
 
 const PAGE_SIZE = 100;
 const FEE_RATE = 0.15;
 const GENERAL_PRICE_DIVIDER = 100_000_000;
-const ITEM_PRICE_DIVIDER = 10_000;
 const SMALLEST_PRICE_STEP = 0.01;
-const EPOCH_MULTIPLIER = 1_000;
-
-function averageStats(transact) {
-    if (!transact.length) return 0;
-    const timeSpanSec = transact[transact.length - 1][0] - transact[0][0];
-    const totalValue = transact.reduce((acc, cur) => acc + cur[1], 0);
-    const totalCount = transact.reduce((acc, cur) => acc + cur[2], 0);
-    const secondsPerDay = 86400000 / EPOCH_MULTIPLIER;
-    const daysSpan = timeSpanSec / secondsPerDay;
-    const avgTransactCount = roundTo(totalCount / (daysSpan || 1), 1);
-    const avgTransactValue = roundTo(
-        totalValue / totalCount / ITEM_PRICE_DIVIDER,
-        3
-    );
-    return [avgTransactCount, avgTransactValue];
-}
 
 async function fetchAllItems(pages = 1, pageSize = PAGE_SIZE) {
     const allAssets = [];
