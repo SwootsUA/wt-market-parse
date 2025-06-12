@@ -1,5 +1,6 @@
 const yargs = require('yargs/yargs');
 const {hideBin} = require('yargs/helpers');
+const {describe, boolean} = require('yargs');
 
 const argv = yargs(hideBin(process.argv))
     .usage('Usage: $0 [options]')
@@ -34,6 +35,12 @@ const argv = yargs(hideBin(process.argv))
             type: 'boolean',
             default: false,
         },
+        debug: {
+            alias: 'd',
+            describe: 'Print out warnings during script execution',
+            type: 'boolean',
+            default: false,
+        },
     })
     .check(argv => {
         if ([argv.pages, argv.profit, argv.balance, argv.top].some(isNaN)) {
@@ -48,6 +55,7 @@ const PROFIT_THRESHOLD = argv.profit;
 const BALANCE = argv.balance;
 const TOP_COUNT = argv.top;
 const PRINT_ITEM = argv.print;
+const DEBUG = argv.debug;
 
 const PAGE_SIZE = 100;
 const FEE_RATE = 0.15;
@@ -62,6 +70,7 @@ async function fetchPage(skip = 0, count = PAGE_SIZE) {
     const params = new URLSearchParams({
         action: 'cln_market_search',
         token: TOKEN,
+        appid_filter: 1067,
         skip: skip.toString(),
         count: count.toString(),
         text: '',
@@ -103,9 +112,19 @@ async function fetchItem(item) {
         },
         body: params.toString(),
     });
-    const payload = await res.json();
+    let payload;
+    try {
+        payload = await res.json();
+    } catch (error) {
+        if (DEBUG) {
+            console.error(`Bad item ${item}: ${error}, ${res}`);
+        }
+        return [[0, 0, 0]];
+    }
     if (!payload.response || !payload.response['1h']) {
-        console.error(`Bad item ${item}: ${JSON.stringify(payload)}`);
+        if (DEBUG) {
+            console.error(`Bad item ${item}: ${JSON.stringify(payload)}`);
+        }
         return [[0, 0, 0]];
     }
 
@@ -165,17 +184,20 @@ function roundTo(number, precision) {
                     (price - SMALLEST_PRICE_STEP) * (1 - FEE_RATE),
                     2
                 );
+                const number = Math.floor(BALANCE / buy);
+                const profit = roundTo((proceeds - buy) * number, 2);
                 return {
                     hash_name: item.hash_name,
                     name: item.name,
                     buy_price: buy,
-                    profit: roundTo(proceeds - buy, 2),
+                    number: number,
+                    profit: profit,
                 };
             })
             .filter(
                 i =>
-                    i.profit > PROFIT_THRESHOLD &&
-                    i.buy_price <= BALANCE &&
+                    i.profit / i.number > PROFIT_THRESHOLD &&
+                    i.number > 0 &&
                     i.buy_price > 0.1 &&
                     !i.name.includes(' key')
             );
@@ -201,7 +223,6 @@ function roundTo(number, precision) {
             .sort((a, b) => b.score - a.score)
             .slice(0, TOP_COUNT);
 
-        console.log(`Top ${TOP_COUNT} items:`);
         console.table(top);
     } catch (err) {
         console.error(err);

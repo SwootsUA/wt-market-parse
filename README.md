@@ -28,6 +28,7 @@ node index.js --pages <num> --profit <num> --balance <num> --top <num> [--print]
 * `--balance, -b`    Maximum buy price you can afford (default: 1.00)
 * `--top, -t`        Number of top items to display by score (default: 10)
 * `--print, -i`      Print the first item fetched (optional)
+* `--debug, -d`      Print out warnings during execution (optional)
 
 ## Example
 
