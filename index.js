@@ -15,7 +15,6 @@ function pick(obj, keys) {
 // helper to round to N significant figures
 function roundSig(x, sig = 3) {
     if (typeof x !== 'number' || x === 0) return x;
-    // toPrecision returns a string, so we parse it back
     return parseFloat(x.toPrecision(sig));
 }
 
