@@ -84,6 +84,13 @@ async function enrichAll(profitable) {
     return enriched;
 }
 
+function pick(obj, keys) {
+    return keys.reduce((out, key) => {
+        if (key in obj) out[key] = obj[key];
+        return out;
+    }, {});
+}
+
 (async () => {
     try {
         const items = await fetchAllItems(config.pages);
@@ -144,33 +151,15 @@ async function enrichAll(profitable) {
             );
         });
 
-        // sort by score, take top N
         const top = enriched
             .sort((a, b) => b.score - a.score)
             .slice(0, config.top);
 
-        const presentation = top.map(item => {
-            const obj = {
-                hash_name: item.hash_name,
-                buy_price: item.buy_price,
-                number: item.number,
-                score: item.score,
-            };
-            if (!config.noName) {
-                obj.name = item.name;
-            }
-            return obj;
-        });
-
-        if (config.allInfo) {
-            if (top.length > 0) {
-                console.table(top);
-            }
-        } else {
-            if (presentation.length > 0) {
-                console.table(presentation);
-            }
-        }
+        const cols = ['hash_name', 'buyPrice', 'profit', 'score'];
+        if (!config.noName) cols.push('name');
+        console.table(
+            config.allInfo ? enriched : top.map(it => pick(it, cols))
+        );
     } catch (err) {
         console.error(err);
     }
