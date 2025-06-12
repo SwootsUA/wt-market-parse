@@ -1,8 +1,8 @@
-const config = require('./cli')();
-const {fetchPage, fetchItem} = require('./fetcher');
-const {averageStats} = require('./stats');
-const {makeBarDrawer} = require('./progress');
-const {scoreItem} = require('./score');
+const config = require('./modules/cli')();
+const {fetchPage, fetchItem} = require('./modules/fetcher');
+const {averageStats} = require('./modules/stats');
+const {makeBarDrawer} = require('./modules/progress');
+const {scoreItem} = require('./modules/score');
 
 // simple pick helper so we don't need lodash
 function pick(obj, keys) {
