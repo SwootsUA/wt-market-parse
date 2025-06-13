@@ -29,12 +29,14 @@ const PRICE_STEP = 0.01;
 
             const newEvents = history.filter(item => item.event === 'new');
 
+            const dealCloser = ['cancel', 'deal'];
+
             const openDeals = newEvents.filter(openEv => {
                 return !history.some(
                     evt =>
-                        evt.hashname === openEv.hashname && // match by hashname
-                        (evt.event === 'cancel' || evt.event === 'deal') && // a closing event
-                        evt.ts > openEv.ts // happens after the 'new'
+                        evt.hashname === openEv.hashname &&
+                        dealCloser.includes(evt.event) &&
+                        evt.ts >= openEv.ts
                 );
             });
 
