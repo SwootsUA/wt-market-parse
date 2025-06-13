@@ -100,6 +100,7 @@ const PRICE_STEP = 0.01;
                 txPrice: it.txPrice,
                 buyPrice: it.buyPrice,
                 sellPrice: it.sellPrice,
+                number: it.number,
             });
         });
 
