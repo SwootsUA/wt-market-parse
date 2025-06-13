@@ -1,5 +1,6 @@
 const yargs = require('yargs/yargs');
 const {hideBin} = require('yargs/helpers');
+const {alias, describe} = require('yargs');
 
 module.exports = () => {
     const argv = yargs(hideBin(process.argv))
@@ -53,6 +54,12 @@ module.exports = () => {
                 default: false,
                 describe: 'Print all data in final table',
             },
+            history: {
+                alias: 'h',
+                type: 'boolean',
+                default: false,
+                describe: 'Switch to history mode',
+            },
         })
         .check(o => {
             if ([o.pages, o.profit, o.balance, o.top].some(isNaN))
@@ -70,5 +77,6 @@ module.exports = () => {
         debug: argv.debug,
         showName: argv.showName,
         allInfo: argv.allInfo,
+        history: argv.history,
     };
 };
