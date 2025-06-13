@@ -31,36 +31,41 @@ const PRICE_STEP = 0.01;
     try {
         if (config.deals) {
             const deals = await fetchUserDeals();
-
             const cols = ['type', 'localPrice', 'market'];
-            const usefulData = deals.map(deal => {
-                return {
-                    ...pick(deal, cols),
-                    localPrice: deal.localPrice / 10_000,
-                };
-            });
-            const noTrophy = usefulData.filter(
-                deal => !deal.market.includes('trophy')
+
+            const data = deals.map(deal => ({
+                ...pick(deal, cols),
+                localPrice: deal.localPrice / 10_000
+            }));
+
+            const usefulData = config.withTrophy ? data : data.filter(deal =>
+                !deal.market.includes('trophy')
             );
 
-            if (!config.withTrophy) {
-                console.table(noTrophy);
+            const losingDeals = [];
+            for (const deal of usefulData) {
+                const dealMarket = await books(deal.market);
+                const bestBuyPrice = dealMarket.BUY[0][0] / 10_000;
+                const bestSellPrice = dealMarket.SELL[0][0] / 10_000;
+                
+                if (deal.type === 'BUY' && bestBuyPrice > deal.localPrice) {
+                    losingDeals.push({...deal, betterPrice: bestBuyPrice, sellPrice: bestSellPrice});
+                } 
+                if (deals.type === 'SELL' && bestSellPrice < deal.localPrice) {
+                    losingDeals.push({...deal, betterPrice: bestSellPrice, buyPrice: bestBuyPrice});
+                }
+            }
+            
+            if (losingDeals.lenght > 0) {
+                console.table(losingDeals);
             } else {
-                console.table(usefulData);
+                console.log("All deals are looking good")
             }
 
-            const market = await books(noTrophy[0].market);
-            console.table(
-                market.BUY.map(entry => {
-                    return {price: entry[0] / 10_000, count: entry[1]};
-                })
-            );
-
-            console.table(
-                market.SELL.map(entry => {
-                    return {price: entry[0] / 10_000, count: entry[1]};
-                })
-            );
+            for (const deal of losingDeals) {
+                console.log(`New order price: ${roundSig(deal.type === 'BUY' ? deal.betterPrice + PRICE_STEP : deal.betterPrice - PRICE_STEP, 2)}`);
+                console.log(`Order URL: https://trade.gaijin.net/market/1067/${deal.market}`);
+            }
 
             return;
         }
