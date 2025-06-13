@@ -112,6 +112,40 @@ async function fetchUserDeals() {
     return data.response;
 }
 
+async function books(market) {
+    const params = new URLSearchParams({
+        action: 'cln_books_brief',
+        token: TOKEN,
+        appId: 1067,
+        market_name: market,
+    });
+
+    const res = await fetch('https://market-proxy.gaijin.net/web', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            accept: 'application/json, text/plain, */*',
+        },
+        body: params.toString(),
+    });
+
+    if (!res.ok) {
+        if (config.debug)
+            console.error('HTTP error', res.status, res.statusText);
+        return [];
+    }
+
+    let data;
+    try {
+        data = await res.json();
+    } catch (err) {
+        if (config.debug) console.error('Invalid JSON', err);
+        return [];
+    }
+
+    return data.response;
+}
+
 async function placeMarketBuy(marketName, amount, price) {
     const params = new URLSearchParams({
         action: 'cln_market_buy',
@@ -230,4 +264,5 @@ module.exports = {
     placeMarketBuy,
     placeMarketSell,
     cancelOrder,
+    books,
 };

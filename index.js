@@ -1,5 +1,10 @@
 const config = require('./modules/cli')();
-const {fetchPage, fetchItem, fetchUserDeals} = require('./modules/fetcher');
+const {
+    fetchPage,
+    fetchItem,
+    fetchUserDeals,
+    books,
+} = require('./modules/fetcher');
 const {averageStats} = require('./modules/stats');
 const {makeBarDrawer} = require('./modules/progress');
 const {scoreItem} = require('./modules/score');
