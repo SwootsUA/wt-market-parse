@@ -56,7 +56,7 @@ const PRICE_STEP = 0.01;
                 }
             }
             
-            if (losingDeals.lenght > 0) {
+            if (losingDeals.length > 0) {
                 console.table(losingDeals);
             } else {
                 console.log("All deals are looking good")
