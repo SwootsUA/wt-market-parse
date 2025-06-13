@@ -74,4 +74,28 @@ async function fetchItem(item, debug) {
     return payload.response['1h'];
 }
 
-module.exports = {fetchPage, fetchItem};
+async function fetchUserHistory() {
+    const params = new URLSearchParams({
+        action: 'cln_get_user_history',
+        token: TOKEN,
+        count: 100,
+        skip: 0,
+    });
+
+    const res = await fetch('https://market-proxy.gaijin.net/web', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            accept: 'application/json, text/plain, */*',
+        },
+        body: params.toString(),
+    });
+
+    try {
+        return res.response.events;
+    } catch {
+        return [];
+    }
+}
+
+module.exports = {fetchPage, fetchItem, fetchUserHistory};
