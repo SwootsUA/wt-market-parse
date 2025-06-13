@@ -75,12 +75,10 @@ async function fetchItem(item, debug) {
     return payload.response['1h'];
 }
 
-async function fetchUserHistory() {
+async function fetchUserDeals() {
     const params = new URLSearchParams({
-        action: 'cln_get_user_history',
+        action: 'cln_get_user_open_orders',
         token: TOKEN,
-        count: 100,
-        skip: 0,
     });
 
     const res = await fetch('https://market-proxy.gaijin.net/web', {
@@ -106,13 +104,12 @@ async function fetchUserHistory() {
         return [];
     }
 
-    const events = data.response.events;
-    if (!Array.isArray(events)) {
+    if (!Array.isArray(data.response)) {
         if (config.debug) console.error('Unexpected payload shape', data);
         return [];
     }
 
-    return events;
+    return data.response;
 }
 
-module.exports = {fetchPage, fetchItem, fetchUserHistory};
+module.exports = {fetchPage, fetchItem, fetchUserDeals};

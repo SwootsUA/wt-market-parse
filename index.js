@@ -1,5 +1,5 @@
 const config = require('./modules/cli')();
-const {fetchPage, fetchItem, fetchUserHistory} = require('./modules/fetcher');
+const {fetchPage, fetchItem, fetchUserDeals} = require('./modules/fetcher');
 const {averageStats} = require('./modules/stats');
 const {makeBarDrawer} = require('./modules/progress');
 const {scoreItem} = require('./modules/score');
@@ -25,26 +25,16 @@ const PRICE_STEP = 0.01;
 (async () => {
     try {
         if (config.history) {
-            const history = await fetchUserHistory();
+            const deals = await fetchUserDeals();
 
-            const newEvents = history.filter(item => item.event === 'new');
-
-            const dealCloser = ['cancel', 'deal'];
-
-            const openDeals = newEvents.filter(openEv => {
-                return !history.some(
-                    evt =>
-                        evt.hashname === openEv.hashname &&
-                        dealCloser.includes(evt.event) &&
-                        evt.ts >= openEv.ts
-                );
+            const cols = ['type', 'localPrice', 'market'];
+            const usefulData = deals.map(deal => {
+                return {
+                    ...pick(deal, cols),
+                    localPrice: deal.localPrice / 10_000,
+                };
             });
 
-            openDeals.forEach(item => (item.price = item.price / 10_000));
-
-            const cols = ['type', 'price', 'hashname'];
-
-            const usefulData = openDeals.map(deal => pick(deal, cols));
             console.table(usefulData);
             return;
         }
