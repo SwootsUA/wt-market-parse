@@ -39,15 +39,28 @@ const PRICE_STEP = 0.01;
                     localPrice: deal.localPrice / 10_000,
                 };
             });
+            const noTrophy = usefulData.filter(
+                deal => !deal.market.includes('trophy')
+            );
 
             if (!config.withTrophy) {
-                const noTrophy = usefulData.filter(
-                    deal => !deal.market.includes('trophy')
-                );
                 console.table(noTrophy);
             } else {
                 console.table(usefulData);
             }
+
+            const market = await books(noTrophy[0].market);
+            console.table(
+                market.BUY.map(entry => {
+                    return {price: entry[0] / 10_000, count: entry[1]};
+                })
+            );
+
+            console.table(
+                market.SELL.map(entry => {
+                    return {price: entry[0] / 10_000, count: entry[1]};
+                })
+            );
 
             return;
         }
