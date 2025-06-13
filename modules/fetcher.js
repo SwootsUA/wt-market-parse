@@ -124,7 +124,7 @@ async function placeMarketBuy(marketName, amount, price) {
         agree_stamp: Date.now(),
     });
 
-    const res = await fetch(ENDPOINT, {
+    const res = await fetch('https://market-proxy.gaijin.net/web', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -168,7 +168,7 @@ async function placeMarketSell(
         agree_stamp: Date.now(),
     });
 
-    const res = await fetch(ENDPOINT, {
+    const res = await fetch('https://market-proxy.gaijin.net/web', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -192,15 +192,17 @@ async function placeMarketSell(
     return payload.response;
 }
 
-async function cancelOrder(pairId, orderId) {
+async function cancelOrder(txId, pairId, orderId) {
     const params = new URLSearchParams({
         action: 'cancel_order',
         token: TOKEN,
+        transactid: txId,
         pairId: pairId,
         orderId: orderId,
+        reqstamp: Date.now(),
     });
 
-    const res = await fetch(ENDPOINT, {
+    const res = await fetch('https://market-proxy.gaijin.net/web', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
