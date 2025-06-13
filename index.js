@@ -56,16 +56,22 @@ const PRICE_STEP = 0.01;
                 }
             }
             
-            if (losingDeals.length > 0) {
-                console.table(losingDeals);
-            } else {
-                console.log("All deals are looking good")
+            if (losingDeals.length === 0) {
+                console.log("All deals are looking good");
+                return;
             }
+            
+            const output = losingDeals.map(deal => ({
+                "Current Price": deal.localPrice.toFixed(2),
+                "Suggested Price": (
+                    deal.type === 'BUY'
+                        ? deal.betterPrice + PRICE_STEP
+                        : deal.betterPrice - PRICE_STEP
+                    ).toFixed(2),
+                URL: `https://trade.gaijin.net/market/1067/${deal.market}`
+            }));
 
-            for (const deal of losingDeals) {
-                console.log(`New order price: ${roundSig(deal.type === 'BUY' ? deal.betterPrice + PRICE_STEP : deal.betterPrice - PRICE_STEP, 2)}`);
-                console.log(`Order URL: https://trade.gaijin.net/market/1067/${deal.market}`);
-            }
+            console.table(output);
 
             return;
         }
