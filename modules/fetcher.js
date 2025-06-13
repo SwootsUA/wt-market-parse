@@ -112,4 +112,120 @@ async function fetchUserDeals() {
     return data.response;
 }
 
-module.exports = {fetchPage, fetchItem, fetchUserDeals};
+async function placeMarketBuy(marketName, amount, price) {
+    const params = new URLSearchParams({
+        action: 'cln_market_buy',
+        token: TOKEN,
+        appid: 1067,
+        market_name: marketName,
+        amount: amount,
+        price: price,
+        currencyid: 'gjn',
+        agree_stamp: Date.now(),
+    });
+
+    const res = await fetch(ENDPOINT, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            accept: 'application/json, text/plain, */*',
+        },
+        body: params.toString(),
+    });
+
+    const payload = await res.json().catch(err => {
+        if (config.debug)
+            console.error('placeMarketBuy > invalid JSON', err, res);
+        throw err;
+    });
+
+    if (!payload.response) {
+        throw new Error(
+            `placeMarketBuy bad payload: ${JSON.stringify(payload)}`
+        );
+    }
+
+    return payload.response;
+}
+
+async function placeMarketSell(
+    contextId,
+    assetId,
+    amount,
+    price,
+    sellerShouldGet
+) {
+    const params = new URLSearchParams({
+        action: 'cln_market_sell',
+        token: TOKEN,
+        appid: 1067,
+        contextid: contextId,
+        assetid: assetId,
+        amount: amount,
+        price: price,
+        seller_should_get: sellerShouldGet,
+        currencyid: 'gjn',
+        agree_stamp: Date.now(),
+    });
+
+    const res = await fetch(ENDPOINT, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            accept: 'application/json, text/plain, */*',
+        },
+        body: params.toString(),
+    });
+
+    const payload = await res.json().catch(err => {
+        if (config.debug)
+            console.error('placeMarketSell > invalid JSON', err, res);
+        throw err;
+    });
+
+    if (!payload.response) {
+        throw new Error(
+            `placeMarketSell bad payload: ${JSON.stringify(payload)}`
+        );
+    }
+
+    return payload.response;
+}
+
+async function cancelOrder(pairId, orderId) {
+    const params = new URLSearchParams({
+        action: 'cancel_order',
+        token: TOKEN,
+        pairId: pairId,
+        orderId: orderId,
+    });
+
+    const res = await fetch(ENDPOINT, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            accept: 'application/json, text/plain, */*',
+        },
+        body: params.toString(),
+    });
+
+    const payload = await res.json().catch(err => {
+        if (config.debug) console.error('cancelOrder > invalid JSON', err, res);
+        throw err;
+    });
+
+    if (!payload.response) {
+        throw new Error(`cancelOrder bad payload: ${JSON.stringify(payload)}`);
+    }
+
+    return payload.response;
+}
+
+module.exports = {
+    fetchPage,
+    fetchItem,
+    fetchUserDeals,
+    placeMarketBuy,
+    placeMarketSell,
+    cancelOrder,
+};
