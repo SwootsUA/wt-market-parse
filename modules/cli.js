@@ -64,7 +64,12 @@ module.exports = () => {
                 alias: 'w',
                 type: 'boolean',
                 default: false,
-                describe: 'include trophy into deals list'
+                describe: 'Include trophy into deals list'
+            }
+            bot: {
+                type: 'boolean',
+                default: false,
+                describe: 'Change some outputs for tg bot'
             }
         })
         .check(o => {
@@ -85,5 +90,6 @@ module.exports = () => {
         allInfo: argv.allInfo,
         deals: argv.deals,
         withTrophy: argv.withTrophy,
+        bot: argv.bot,
     };
 };
