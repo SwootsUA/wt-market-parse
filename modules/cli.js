@@ -37,7 +37,7 @@ module.exports = () => {
                 describe: 'Print the first item fetched fully',
             },
             debug: {
-                alias: 'd',
+                alias: 'D',
                 type: 'boolean',
                 default: false,
                 describe: 'Print out warnings during script execution',
@@ -54,12 +54,18 @@ module.exports = () => {
                 default: false,
                 describe: 'Print all data in final table',
             },
-            history: {
-                alias: 'h',
+            deals: {
+                alias: 'd',
                 type: 'boolean',
                 default: false,
-                describe: 'Switch to history mode',
+                describe: 'Switch to deals mode',
             },
+            'with-trophy': {
+                alias: 'w',
+                type: 'boolean',
+                default: false,
+                describe: 'include trophy into deals list'
+            }
         })
         .check(o => {
             if ([o.pages, o.profit, o.balance, o.top].some(isNaN))
@@ -77,6 +83,7 @@ module.exports = () => {
         debug: argv.debug,
         showName: argv.showName,
         allInfo: argv.allInfo,
-        history: argv.history,
+        deals: argv.deals,
+        withTrophy: argv.withTrophy,
     };
 };

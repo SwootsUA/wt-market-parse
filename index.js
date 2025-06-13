@@ -24,7 +24,7 @@ const PRICE_STEP = 0.01;
 
 (async () => {
     try {
-        if (config.history) {
+        if (config.deals) {
             const deals = await fetchUserDeals();
 
             const cols = ['type', 'localPrice', 'market'];
@@ -35,7 +35,15 @@ const PRICE_STEP = 0.01;
                 };
             });
 
-            console.table(usefulData);
+            if (!config.withTrophy) {
+                const noTrophy = usefulData.filter(
+                    deal => !deal.market.includes('trophy')
+                );
+                console.table(noTrophy);
+            } else {
+                console.table(usefulData);
+            }
+
             return;
         }
 
