@@ -1,4 +1,5 @@
 require('dotenv').config();
+const config = require('./cli')();
 
 const TOKEN = process.env.WT_TOKEN;
 const PAGE_SIZE = 100;
@@ -91,11 +92,27 @@ async function fetchUserHistory() {
         body: params.toString(),
     });
 
-    try {
-        return res.response.events;
-    } catch {
+    if (!res.ok) {
+        if (config.debug)
+            console.error('HTTP error', res.status, res.statusText);
         return [];
     }
+
+    let data;
+    try {
+        data = await res.json();
+    } catch (err) {
+        if (config.debug) console.error('Invalid JSON', err);
+        return [];
+    }
+
+    const events = data.response.events;
+    if (!Array.isArray(events)) {
+        if (config.debug) console.error('Unexpected payload shape', data);
+        return [];
+    }
+
+    return events;
 }
 
 module.exports = {fetchPage, fetchItem, fetchUserHistory};
