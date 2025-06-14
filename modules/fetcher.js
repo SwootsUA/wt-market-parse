@@ -146,6 +146,41 @@ async function books(market) {
     return data.response;
 }
 
+async function getUserBalance() {
+    // action is not correct need to find correct action for this
+    return "WIP";
+
+    const params = new URLSearchParams({
+        action: 'cln_get_user_balance',
+        token: TOKEN,
+    });
+
+    const res = await fetch('https://market-proxy.gaijin.net/web', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            accept: 'application/json, text/plain, */*',
+        },
+        body: params.toString(),
+    });
+
+    if (!res.ok) {
+        if (config.debug)
+            console.log('HTTP error', res.status, res.statusText);
+        return 0;
+    }
+
+    let balance;
+    try {
+        balance = await res.json();
+    } catch (err) {
+        if (config.debug) console.error('Invalid JSON', err);
+        return 0;
+    }
+
+    return balance;
+}
+
 async function placeMarketBuy(marketName, amount, price) {
     const params = new URLSearchParams({
         action: 'cln_market_buy',
@@ -265,4 +300,5 @@ module.exports = {
     placeMarketSell,
     cancelOrder,
     books,
+    getUserBalance,
 };
