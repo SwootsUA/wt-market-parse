@@ -66,6 +66,15 @@ const PRICE_STEP = 0.01;
 
             if (!config.bot) {
                 console.table(usefulData);
+                const orderValue = usefulData.reduce((acc, cur) => {
+                    const qty = Number(cur.amount);
+                    const thisValue =
+                        cur.type === 'BUY'
+                            ? cur.localPrice * qty
+                            : cur.localPrice * (1 - FEE_RATE) * qty;
+                    return acc + thisValue;
+                }, 0);
+                console.log(`Total value of orders is ${orderValue}`);
             }
 
             if (losingDeals.length === 0) {
