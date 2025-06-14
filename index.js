@@ -31,7 +31,7 @@ const PRICE_STEP = 0.01;
     try {
         if (config.deals) {
             const deals = await fetchUserDeals();
-            const cols = ['type', 'localPrice', 'market'];
+            const cols = ['type', 'amount', 'localPrice', 'market'];
 
             const data = deals.map(deal => ({
                 ...pick(deal, cols),
@@ -62,6 +62,10 @@ const PRICE_STEP = 0.01;
                         buyPrice: bestBuyPrice,
                     });
                 }
+            }
+
+            if (!config.bot) {
+                console.table(usefulData);
             }
 
             if (losingDeals.length === 0) {
