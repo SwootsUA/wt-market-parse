@@ -74,7 +74,9 @@ const PRICE_STEP = 0.01;
                             : cur.localPrice * (1 - FEE_RATE) * qty;
                     return acc + thisValue;
                 }, 0);
-                console.log(`Total value of orders is ${orderValue}`);
+                console.log(
+                    `Total value of orders is ${orderValue.toFixed(2)}`
+                );
             }
 
             if (losingDeals.length === 0) {
