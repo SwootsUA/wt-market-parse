@@ -4,6 +4,7 @@ const {
     fetchItem,
     fetchUserDeals,
     books,
+    getUserBalance,
 } = require('./modules/fetcher');
 const {averageStats} = require('./modules/stats');
 const {makeBarDrawer} = require('./modules/progress');
@@ -47,7 +48,7 @@ const PRICE_STEP = 0.01;
                 const dealMarket = await books(deal.market);
                 const bestBuyPrice = dealMarket.BUY[0][0] / 10_000;
                 const bestSellPrice = dealMarket.SELL[0][0] / 10_000;
-
+                
                 if (deal.type === 'BUY' && bestBuyPrice > deal.localPrice) {
                     losingDeals.push({
                         ...deal,
@@ -55,7 +56,7 @@ const PRICE_STEP = 0.01;
                         sellPrice: bestSellPrice,
                     });
                 }
-                if (deals.type === 'SELL' && bestSellPrice < deal.localPrice) {
+                if (deal.type === 'SELL' && bestSellPrice < deal.localPrice) {
                     losingDeals.push({
                         ...deal,
                         betterPrice: bestSellPrice,
@@ -77,6 +78,7 @@ const PRICE_STEP = 0.01;
                 console.log(
                     `Total value of orders is ${orderValue.toFixed(2)}`
                 );
+                console.log('Balance: ', await getUserBalance());
             }
 
             if (losingDeals.length === 0) {
