@@ -9,7 +9,7 @@ module.exports = () => {
             pages: {
                 alias: 'p',
                 type: 'number',
-                default: 1,
+                default: 5,
                 describe: 'Number of item pages to fetch',
             },
             profit: {
