@@ -35,37 +35,46 @@ const PRICE_STEP = 0.01;
 
             const data = deals.map(deal => ({
                 ...pick(deal, cols),
-                localPrice: deal.localPrice / 10_000
+                localPrice: deal.localPrice / 10_000,
             }));
 
-            const usefulData = config.withTrophy ? data : data.filter(deal =>
-                !deal.market.includes('trophy')
-            );
+            const usefulData = config.withTrophy
+                ? data
+                : data.filter(deal => !deal.market.includes('trophy'));
 
             const losingDeals = [];
             for (const deal of usefulData) {
                 const dealMarket = await books(deal.market);
                 const bestBuyPrice = dealMarket.BUY[0][0] / 10_000;
                 const bestSellPrice = dealMarket.SELL[0][0] / 10_000;
-                
+
                 if (deal.type === 'BUY' && bestBuyPrice > deal.localPrice) {
-                    losingDeals.push({...deal, betterPrice: bestBuyPrice, sellPrice: bestSellPrice});
-                } 
+                    losingDeals.push({
+                        ...deal,
+                        betterPrice: bestBuyPrice,
+                        sellPrice: bestSellPrice,
+                    });
+                }
                 if (deals.type === 'SELL' && bestSellPrice < deal.localPrice) {
-                    losingDeals.push({...deal, betterPrice: bestSellPrice, buyPrice: bestBuyPrice});
+                    losingDeals.push({
+                        ...deal,
+                        betterPrice: bestSellPrice,
+                        buyPrice: bestBuyPrice,
+                    });
                 }
             }
-            
+
             if (losingDeals.length === 0) {
-                console.log("All deals are looking good");
+                console.log('All deals are looking good');
                 return;
             }
-           
+
             if (config.bot) {
                 for (const deal of losingDeals) {
-                    const suggested = (deal.type === 'BUY'
-                        ? deal.betterPrice + PRICE_STEP
-                        : deal.betterPrice - PRICE_STEP
+                    const suggested = (
+                        deal.type === 'BUY'
+                            ? deal.betterPrice + PRICE_STEP
+                            : deal.betterPrice - PRICE_STEP
                     ).toFixed(2);
 
                     // build the message
@@ -75,7 +84,7 @@ const PRICE_STEP = 0.01;
                         `*Current Price:* \`${deal.localPrice.toFixed(2)}\``,
                         `*Suggested:* \`${suggested}\``,
                         ``,
-                        `[View on Market](https://trade.gaijin.net/market/1067/${deal.market})`
+                        `[View on Market](https://trade.gaijin.net/market/1067/${deal.market})`,
                     ].join('\n');
 
                     console.log(msg);
@@ -86,13 +95,12 @@ const PRICE_STEP = 0.01;
             }
 
             const output = losingDeals.map(deal => ({
-                "Current Price": deal.localPrice.toFixed(2),
-                "Suggested Price": (
-                    deal.type === 'BUY'
-                        ? deal.betterPrice + PRICE_STEP
-                        : deal.betterPrice - PRICE_STEP
-                    ).toFixed(2),
-                URL: `https://trade.gaijin.net/market/1067/${deal.market}`
+                'Current Price': deal.localPrice.toFixed(2),
+                'Suggested Price': (deal.type === 'BUY'
+                    ? deal.betterPrice + PRICE_STEP
+                    : deal.betterPrice - PRICE_STEP
+                ).toFixed(2),
+                URL: `https://trade.gaijin.net/market/1067/${deal.market}`,
             }));
 
             console.table(output);
