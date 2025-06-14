@@ -26,14 +26,10 @@ A Node.js script to discover profitable items on the Gaijin market.
 ## Usage
 
 ```bash
-node index.js --pages <num> \
-              --profit <num> \
-              --balance <num> \
-              --top <num> \
-              [--print] [--debug] [--show-name] [--all-info] \
-              [--deals] [--with-trophy] [--bot]
+node index.js [options]
 ```
 
+Options:
 -   `--help` Show help (optional)
 -   `--pages, -p` Number of pages to fetch (default: 5)
 -   `--profit, -r` Minimum profit per item (default: 0.1)
