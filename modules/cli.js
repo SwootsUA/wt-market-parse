@@ -65,7 +65,7 @@ module.exports = () => {
                 type: 'boolean',
                 default: false,
                 describe: 'Include trophy into deals list'
-            }
+            },
             bot: {
                 type: 'boolean',
                 default: false,

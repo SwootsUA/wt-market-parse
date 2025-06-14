@@ -60,7 +60,31 @@ const PRICE_STEP = 0.01;
                 console.log("All deals are looking good");
                 return;
             }
-            
+           
+            if (config.bot) {
+                for (const deal of losingDeals) {
+                    const suggested = (deal.type === 'BUY'
+                        ? deal.betterPrice + PRICE_STEP
+                        : deal.betterPrice - PRICE_STEP
+                    ).toFixed(2);
+
+                    // build the message
+                    const msg = [
+                        `⚠️ *New problem detected!*`,
+                        ``,
+                        `*Current Price:* \`${deal.localPrice.toFixed(2)}\``,
+                        `*Suggested:* \`${suggested}\``,
+                        ``,
+                        `[View on Market](https://trade.gaijin.net/market/1067/${deal.market})`
+                    ].join('\n');
+
+                    console.log(msg);
+                }
+
+                // early return so we don’t console.table as well
+                return;
+            }
+
             const output = losingDeals.map(deal => ({
                 "Current Price": deal.localPrice.toFixed(2),
                 "Suggested Price": (
