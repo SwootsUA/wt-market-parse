@@ -147,26 +147,15 @@ async function books(market) {
 }
 
 async function getUserBalance() {
-    // action is not correct need to find correct action for this
-    return "WIP";
-
-    const params = new URLSearchParams({
-        action: 'cln_get_user_balance',
-        token: TOKEN,
-    });
-
-    const res = await fetch('https://market-proxy.gaijin.net/web', {
-        method: 'POST',
+    const res = await fetch('https://wallet.gaijin.net/GetBalance?', {
+        method: 'GET',
         headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            accept: 'application/json, text/plain, */*',
+            authorization: `BEARER ${TOKEN}`,
         },
-        body: params.toString(),
     });
 
     if (!res.ok) {
-        if (config.debug)
-            console.log('HTTP error', res.status, res.statusText);
+        if (config.debug) console.log('HTTP error', res.status, res.statusText);
         return 0;
     }
 
@@ -178,7 +167,7 @@ async function getUserBalance() {
         return 0;
     }
 
-    return balance;
+    return (balance.balance / 10_000).toFixed(2);
 }
 
 async function placeMarketBuy(marketName, amount, price) {

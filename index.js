@@ -78,7 +78,7 @@ const PRICE_STEP = 0.01;
                 console.log(
                     `Total value of orders is ${orderValue.toFixed(2)}`
                 );
-                console.log('Balance: ', await getUserBalance());
+                console.log('Balance:', await getUserBalance());
             }
 
             if (losingDeals.length === 0) {
