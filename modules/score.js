@@ -11,7 +11,7 @@ function scoreItem({dailyTx, profit, txPrice, buyPrice, sellPrice, number}) {
     const mid = computeMid(buyPrice, sellPrice);
     const prox = priceProximity(txPrice, mid);
 
-    return 0.4 * dailyTx + 0.6 * profit + 0.2 * prox - 0.2 * number;
+    return (dailyTx ** 3) * (profit ** 1.5) * (prox ** 3) / (number ** 2);
 }
 
 module.exports = {scoreItem};
