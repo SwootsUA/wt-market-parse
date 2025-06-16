@@ -193,7 +193,8 @@ const PRICE_STEP = 0.01;
                 i =>
                     i.number > 0 &&
                     i.perItemProfit > config.profit &&
-                    !i.name.includes(' key')
+                    !i.name.includes(' key') &&
+                    i.buyPrice >= 0.1 // is real price
             );
 
         // 3) Enrich with stats
@@ -201,7 +202,6 @@ const PRICE_STEP = 0.01;
         const CONCURRENCY = Infinity; // tweak this up/down to find the sweet spot
         const limit = pLimit(CONCURRENCY);
 
-        // 3) Enrich with stats
         const barItems = makeBarDrawer(candidates.length, 20, 'Fetching items');
         const enriched = new Array(candidates.length);
 
@@ -255,15 +255,19 @@ const PRICE_STEP = 0.01;
         console.log(`❌ Failed items:    ${failureCount}`);
         console.log(`🔢 Total attempted: ${candidates.length}\n`);
 
+        const maxDailyTx = Math.max(...enriched.map(it => it.dailyTx), 1);
+        const maxProfit = Math.max(...enriched.map(it => it.perItemProfit), 1);
+
         // 4) Score each item
         enriched.forEach(it => {
+            const dailyTxNorm = it.dailyTx / maxDailyTx;
+            const profitNorm = it.perItemProfit / maxProfit;
             it.score = scoreItem({
-                dailyTx: it.dailyTx,
-                perItemProfit: it.perItemProfit,
+                dailyTx: dailyTxNorm,
+                perItemProfit: profitNorm,
                 txPrice: it.txPrice,
                 buyPrice: it.buyPrice,
                 sellPrice: it.sellPrice,
-                number: it.number,
             });
         });
 
