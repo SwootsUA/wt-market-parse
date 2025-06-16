@@ -71,12 +71,6 @@ module.exports = () => {
                 default: false,
                 describe: 'Change some outputs for tg bot',
             },
-            offset: {
-                alias: 'a',
-                type: 'number',
-                default: 0,
-                describe: 'Set offset to the pages count',
-            },
             json: {
                 alias: 'J',
                 type: 'boolean',
@@ -103,7 +97,6 @@ module.exports = () => {
         deals: argv.deals,
         withTrophy: argv.withTrophy,
         bot: argv.bot,
-        offset: argv.offset,
         json: argv.json,
     };
 };

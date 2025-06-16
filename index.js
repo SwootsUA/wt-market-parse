@@ -144,8 +144,10 @@ const PRICE_STEP = 0.01;
 
         // 1) Fetch all pages
         const barPages = makeBarDrawer(config.pages, 20, 'Fetching market');
-        const tasks = Array.from({length: config.pages}, (_, i) =>
-            fetchPage((i + config.offset) * 100, 100)
+        const pages = new Array(Math.min(config.pages, 100));
+
+        for (let i = 0; i < pages.length; i++) {
+            pages[i] = await fetchPage(i * 100, 100)
                 .then(res => {
                     barPages.tick();
                     return res;
@@ -159,10 +161,9 @@ const PRICE_STEP = 0.01;
                     }
                     barPages.tick();
                     return [];
-                })
-        );
+                });
+        }
 
-        const pages = await Promise.all(tasks);
         const allAssets = pages.flat();
 
         if (config.printOne && allAssets.length) {
@@ -249,7 +250,10 @@ const PRICE_STEP = 0.01;
             if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, {recursive: true});
 
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            const filename = `pages${config.pages}_offset${config.offset}_${timestamp}.json`;
+            const filename = `pages${Math.min(
+                config.pages,
+                100
+            )}_${timestamp}.json`;
             const filePath = path.join(outDir, filename);
 
             const itemsToWrite = config.allInfo
