@@ -48,7 +48,21 @@ const PRICE_STEP = 0.01;
                 const dealMarket = await books(deal.market);
                 const bestBuyPrice = dealMarket.BUY[0][0] / 10_000;
                 const bestSellPrice = dealMarket.SELL[0][0] / 10_000;
-                
+
+                const stats = await fetchItem(deal.market);
+                const [avgCount, avgValue] = averageStats(stats);
+
+                deal.score = parseFloat(
+                    scoreItem({
+                        dailyTx: avgCount,
+                        txPrice: avgValue,
+                        number: deal.amount,
+                        buyPrice: bestBuyPrice,
+                        sellPrice: bestSellPrice,
+                        profit: bestSellPrice * (1 - FEE_RATE),
+                    }).toFixed(2)
+                );
+
                 if (deal.type === 'BUY' && bestBuyPrice > deal.localPrice) {
                     losingDeals.push({
                         ...deal,
@@ -66,6 +80,7 @@ const PRICE_STEP = 0.01;
             }
 
             if (!config.bot) {
+                usefulData.sort((a, b) => b.score - a.score);
                 console.table(usefulData);
                 const orderValue = usefulData.reduce((acc, cur) => {
                     const qty = Number(cur.amount);
