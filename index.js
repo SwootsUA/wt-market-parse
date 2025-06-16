@@ -9,6 +9,8 @@ const {
 const {averageStats} = require('./modules/stats');
 const {makeBarDrawer} = require('./modules/progress');
 const {scoreItem} = require('./modules/score');
+const fs = require('fs');
+const path = require('path');
 
 // simple pick helper so we don't need lodash
 function pick(obj, keys) {
@@ -241,6 +243,26 @@ const PRICE_STEP = 0.01;
 
         // 6) Show
         console.table(display);
+
+        if (config.json) {
+            const outDir = path.resolve(__dirname, 'json_output');
+            if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, {recursive: true});
+
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const filename = `pages${config.pages}_offset${config.offset}_${timestamp}.json`;
+            const filePath = path.join(outDir, filename);
+
+            const itemsToWrite = config.allInfo
+                ? display
+                : display.slice(0, config.top);
+
+            fs.writeFileSync(
+                filePath,
+                JSON.stringify(itemsToWrite, null, 2),
+                'utf8'
+            );
+            console.log(`→ Wrote ${itemsToWrite.length} items to ${filePath}`);
+        }
     } catch (err) {
         console.error(err);
     }

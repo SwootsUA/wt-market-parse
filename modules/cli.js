@@ -77,6 +77,12 @@ module.exports = () => {
                 default: 0,
                 describe: 'Set offset to the pages count',
             },
+            json: {
+                alias: 'J',
+                type: 'boolean',
+                default: false,
+                describe: 'Write top N items to a JSON file',
+            },
         })
         .check(o => {
             if ([o.pages, o.profit, o.balance, o.top].some(isNaN))
@@ -98,5 +104,6 @@ module.exports = () => {
         withTrophy: argv.withTrophy,
         bot: argv.bot,
         offset: argv.offset,
+        json: argv.json,
     };
 };
