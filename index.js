@@ -143,7 +143,7 @@ const PRICE_STEP = 0.01;
         // 1) Fetch all pages
         const barPages = makeBarDrawer(config.pages, 20, 'Fetching market');
         const tasks = Array.from({length: config.pages}, (_, i) =>
-            fetchPage(i * 100, 100)
+            fetchPage((i + config.offset) * 100, 100)
                 .then(res => {
                     barPages.tick();
                     return res;

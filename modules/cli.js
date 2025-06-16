@@ -64,13 +64,19 @@ module.exports = () => {
                 alias: 'w',
                 type: 'boolean',
                 default: false,
-                describe: 'Include trophy into deals list'
+                describe: 'Include trophy into deals list',
             },
             bot: {
                 type: 'boolean',
                 default: false,
-                describe: 'Change some outputs for tg bot'
-            }
+                describe: 'Change some outputs for tg bot',
+            },
+            offset: {
+                alias: 'a',
+                type: 'number',
+                default: 0,
+                describe: 'Set offset to the pages count',
+            },
         })
         .check(o => {
             if ([o.pages, o.profit, o.balance, o.top].some(isNaN))
@@ -91,5 +97,6 @@ module.exports = () => {
         deals: argv.deals,
         withTrophy: argv.withTrophy,
         bot: argv.bot,
+        offset: argv.offset,
     };
 };
