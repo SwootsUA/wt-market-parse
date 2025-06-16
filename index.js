@@ -61,7 +61,8 @@ const PRICE_STEP = 0.01;
                         number: deal.amount,
                         buyPrice: bestBuyPrice,
                         sellPrice: bestSellPrice,
-                        profit: bestSellPrice * (1 - FEE_RATE),
+                        perItemProfit:
+                            bestSellPrice * (1 - FEE_RATE) - bestBuyPrice,
                     }).toFixed(2)
                 );
 
@@ -177,7 +178,7 @@ const PRICE_STEP = 0.01;
                 const buyPrice = item.buy_price / PRICE_DIVIDER + PRICE_STEP;
                 const proceeds = (sellPrice - PRICE_STEP) * (1 - FEE_RATE);
                 const count = Math.floor(config.balance / buyPrice);
-                const profit = (proceeds - buyPrice) * count;
+                const perItemProfit = proceeds - buyPrice;
 
                 return {
                     hash_name: item.hash_name,
@@ -185,37 +186,80 @@ const PRICE_STEP = 0.01;
                     buyPrice,
                     sellPrice,
                     number: count,
-                    profit,
+                    perItemProfit,
                 };
             })
             .filter(
                 i =>
                     i.number > 0 &&
-                    i.profit / i.number > config.profit &&
-                    i.buyPrice > 0.1 &&
+                    i.perItemProfit > config.profit &&
                     !i.name.includes(' key')
             );
 
         // 3) Enrich with stats
+        const pLimit = require('p-limit').default;
+        const CONCURRENCY = Infinity; // tweak this up/down to find the sweet spot
+        const limit = pLimit(CONCURRENCY);
+
+        // 3) Enrich with stats
         const barItems = makeBarDrawer(candidates.length, 20, 'Fetching items');
-        const enriched = await Promise.all(
-            candidates.map(async it => {
-                const stats = await fetchItem(it.hash_name);
-                const [avgCount, avgValue] = averageStats(stats);
-                barItems.tick();
-                return {
-                    ...it,
-                    dailyTx: avgCount,
-                    txPrice: avgValue,
-                };
-            })
+        const enriched = new Array(candidates.length);
+
+        // schedule all fetches, but only CONCURRENCY at once
+        let successCount = 0;
+        let failureCount = 0;
+
+        // helper with retry unchanged
+        async function fetchWithRetry(hash, retries = 3, delayMs = 500) {
+            try {
+                return await fetchItem(hash);
+            } catch (err) {
+                if (retries > 0) {
+                    await new Promise(r => setTimeout(r, delayMs));
+                    return fetchWithRetry(hash, retries - 1, delayMs * 2);
+                }
+                throw err;
+            }
+        }
+
+        // schedule all fetches, but only CONCURRENCY at once
+        const tasks = candidates.map((item, i) =>
+            limit(() =>
+                fetchWithRetry(item.hash_name)
+                    .then(stats => {
+                        successCount++;
+                        const [avgCount, avgValue] = averageStats(stats);
+                        enriched[i] = {
+                            ...item,
+                            dailyTx: avgCount,
+                            txPrice: avgValue,
+                        };
+                    })
+                    .catch(err => {
+                        failureCount++;
+                        if (config.debug) {
+                            console.error(
+                                `⚠️ Item fetch #${i} failed:`,
+                                err.message
+                            );
+                        }
+                    })
+                    .finally(() => barItems.tick())
+            )
         );
+
+        await Promise.all(tasks);
+
+        // log summary
+        console.log(`\n✅ Fetched items:   ${successCount}`);
+        console.log(`❌ Failed items:    ${failureCount}`);
+        console.log(`🔢 Total attempted: ${candidates.length}\n`);
 
         // 4) Score each item
         enriched.forEach(it => {
             it.score = scoreItem({
                 dailyTx: it.dailyTx,
-                profit: it.profit,
+                perItemProfit: it.perItemProfit,
                 txPrice: it.txPrice,
                 buyPrice: it.buyPrice,
                 sellPrice: it.sellPrice,
@@ -225,8 +269,14 @@ const PRICE_STEP = 0.01;
 
         // 5) Sort
         const sorted = enriched.sort((a, b) => b.score - a.score);
+        const cols = [
+            'hash_name',
+            'buyPrice',
+            'number',
+            'perItemProfit',
+            'score',
+        ];
 
-        const cols = ['hash_name', 'buyPrice', 'number', 'profit', 'score'];
         if (config.showName) cols.push('name');
 
         const top = sorted.slice(0, config.top).map(item => pick(item, cols));

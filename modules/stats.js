@@ -12,7 +12,7 @@ function averageStats(transact) {
     const totalCount = transact.reduce((acc, cur) => acc + cur[2], 0);
     const secondsPerDay = 86400000 / EPOCH_MULTIPLIER;
     const daysSpan = timeSpanSec / secondsPerDay;
-    const avgTransactCount = roundTo(totalCount / (daysSpan || 1), 1);
+    const avgTransactCount = totalCount / (daysSpan || 30);
     const avgTransactValue = roundTo(
         totalValue / totalCount / ITEM_PRICE_DIVIDER,
         3
