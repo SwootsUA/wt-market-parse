@@ -38,6 +38,7 @@ const PRICE_STEP = 0.01;
 
             const data = deals.map(deal => ({
                 ...pick(deal, cols),
+                amount: parseInt(deal.amount),
                 localPrice: deal.localPrice / 10_000,
             }));
 
@@ -54,17 +55,15 @@ const PRICE_STEP = 0.01;
                 const stats = await fetchItem(deal.market);
                 const [avgCount, avgValue] = averageStats(stats);
 
-                deal.score = parseFloat(
-                    scoreItem({
-                        dailyTx: avgCount,
-                        txPrice: avgValue,
-                        number: deal.amount,
-                        buyPrice: bestBuyPrice,
-                        sellPrice: bestSellPrice,
-                        perItemProfit:
-                            bestSellPrice * (1 - FEE_RATE) - bestBuyPrice,
-                    }).toFixed(2)
+                deal.dailyTx = parseFloat(avgCount.toFixed(2));
+                deal.txPrice = parseFloat(avgValue.toFixed(2));
+                deal.perItemProfit = parseFloat(
+                    (bestSellPrice * (1 - FEE_RATE) - bestBuyPrice).toFixed(2)
                 );
+
+                // keep prices too, if your score function needs them:
+                deal.buyPrice = bestBuyPrice;
+                deal.sellPrice = bestSellPrice;
 
                 if (deal.type === 'BUY' && bestBuyPrice > deal.localPrice) {
                     losingDeals.push({
@@ -82,6 +81,28 @@ const PRICE_STEP = 0.01;
                 }
             }
 
+            // 1) Compute normalization factors
+            const maxDailyTx = Math.max(...usefulData.map(d => d.dailyTx), 1);
+            const maxProfit = Math.max(
+                ...usefulData.map(d => d.perItemProfit),
+                1
+            );
+            // 2) Now apply normalized scoring
+            for (const deal of usefulData) {
+                const normTx = deal.dailyTx / maxDailyTx;
+                const normProfit = deal.perItemProfit / maxProfit;
+
+                deal.score = parseFloat(
+                    scoreItem({
+                        dailyTx: normTx,
+                        perItemProfit: normProfit,
+                        txPrice: deal.txPrice,
+                        buyPrice: deal.buyPrice,
+                        sellPrice: deal.sellPrice,
+                    }).toFixed(2)
+                );
+            }
+
             if (!config.bot) {
                 usefulData.sort((a, b) => b.score - a.score);
                 console.table(usefulData);
@@ -96,7 +117,20 @@ const PRICE_STEP = 0.01;
                 console.log(
                     `Total value of orders is ${orderValue.toFixed(2)}`
                 );
-                console.log('Balance:', await getUserBalance());
+                const userBalance = await getUserBalance();
+                console.log(`Availible balance: ${userBalance.toFixed(2)}`);
+                const totalBalance = orderValue + userBalance;
+                console.log(`Total balance: ${totalBalance.toFixed(2)}`);
+
+                if (config.json) {
+                    fs.appendFileSync(
+                        './json_output/balance.log',
+                        `${Date.now()
+                            .toString()
+                            .slice(0, 16)
+                            .replace('T', ' ')}: ${totalBalance}\n`
+                    );
+                }
             }
 
             if (losingDeals.length === 0) {

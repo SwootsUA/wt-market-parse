@@ -167,7 +167,7 @@ async function getUserBalance() {
         return 0;
     }
 
-    return (balance.balance / 10_000).toFixed(2);
+    return parseFloat((balance.balance / 10_000).toFixed(2));
 }
 
 async function placeMarketBuy(marketName, amount, price) {
