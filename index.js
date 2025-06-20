@@ -139,6 +139,7 @@ const PRICE_STEP = 0.01;
             }
 
             if (config.bot) {
+		    const userBalanceN = await getUserBalance();
                 for (const deal of losingDeals) {
                     const suggested = (
                         deal.type === 'BUY'
@@ -155,8 +156,8 @@ const PRICE_STEP = 0.01;
                         ``,
                         `[View on Market](https://trade.gaijin.net/market/1067/${deal.market})`,
                     ].join('\n');
-
-                    console.log(msg);
+			
+                    console.log(msg +"\nBalance: " + userBalanceN.toFixed(2));
                 }
 
                 // early return so we don’t console.table as well
