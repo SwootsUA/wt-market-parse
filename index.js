@@ -32,6 +32,10 @@ const PRICE_STEP = 0.01;
 
 (async () => {
     try {
+        if (config.balance === -1) {
+            config.balance = await getUserBalance();
+        }
+
         if (config.deals) {
             const deals = await fetchUserDeals();
             const cols = ['type', 'amount', 'localPrice', 'market'];
@@ -134,7 +138,8 @@ const PRICE_STEP = 0.01;
             }
 
             if (losingDeals.length === 0) {
-                console.log('All deals are looking good');
+                const userBalanceG = await getUserBalance();
+                console.log('All deals are looking good\nBalance: ' + userBalanceG.toFixed(2));
                 return;
             }
 

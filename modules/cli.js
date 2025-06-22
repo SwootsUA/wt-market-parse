@@ -9,7 +9,7 @@ module.exports = () => {
             pages: {
                 alias: 'p',
                 type: 'number',
-                default: 5,
+                default: 100,
                 describe: 'Number of item pages to fetch',
             },
             profit: {
@@ -21,13 +21,13 @@ module.exports = () => {
             balance: {
                 alias: 'b',
                 type: 'number',
-                default: 1.0,
+                default: -1,
                 describe: 'Your available balance',
             },
             top: {
                 alias: 't',
                 type: 'number',
-                default: 10,
+                default: 15,
                 describe: 'Number of top items to display by score',
             },
             print: {
