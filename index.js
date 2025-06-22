@@ -65,7 +65,6 @@ const PRICE_STEP = 0.01;
                     (bestSellPrice * (1 - FEE_RATE) - bestBuyPrice).toFixed(2)
                 );
 
-                // keep prices too, if your score function needs them:
                 deal.buyPrice = bestBuyPrice;
                 deal.sellPrice = bestSellPrice;
 
@@ -139,12 +138,15 @@ const PRICE_STEP = 0.01;
 
             if (losingDeals.length === 0) {
                 const userBalanceG = await getUserBalance();
-                console.log('All deals are looking good\nBalance: ' + userBalanceG.toFixed(2));
+                console.log(
+                    'All deals are looking good\nBalance: ' +
+                        userBalanceG.toFixed(2)
+                );
                 return;
             }
 
             if (config.bot) {
-		    const userBalanceN = await getUserBalance();
+                const userBalanceN = await getUserBalance();
                 for (const deal of losingDeals) {
                     const suggested = (
                         deal.type === 'BUY'
@@ -161,8 +163,8 @@ const PRICE_STEP = 0.01;
                         ``,
                         `[View on Market](https://trade.gaijin.net/market/1067/${deal.market})`,
                     ].join('\n');
-			
-                    console.log(msg +"\nBalance: " + userBalanceN.toFixed(2));
+
+                    console.log(msg + '\nBalance: ' + userBalanceN.toFixed(2));
                 }
 
                 // early return so we don’t console.table as well
@@ -212,7 +214,7 @@ const PRICE_STEP = 0.01;
         }
 
         // 2) Filter for profitable candidates
-        const candidates = allAssets
+        const preCandidates = allAssets
             .map(item => {
                 const sellPrice = item.price / PRICE_DIVIDER;
                 const buyPrice = item.buy_price / PRICE_DIVIDER + PRICE_STEP;
@@ -236,6 +238,19 @@ const PRICE_STEP = 0.01;
                     !i.name.includes(' key') &&
                     i.buyPrice >= 0.1 // is real price
             );
+
+        let candidates;
+
+        if (config.unique) {
+            const uniqueDeals = await fetchUserDeals();
+            const dealsSet = new Set();
+            for (const deal of uniqueDeals) {
+                dealsSet.add(deal.market);
+            }
+            candidates = preCandidates.filter(i => !dealsSet.has(i.name));
+        } else {
+            candidates = preCandidates;
+        }
 
         // 3) Enrich with stats
         const pLimit = require('p-limit').default;

@@ -77,6 +77,12 @@ module.exports = () => {
                 default: false,
                 describe: 'Write top N items to a JSON file',
             },
+            unique: {
+                alias: 'u',
+                type: 'boolean',
+                default: true,
+                describe: 'Removes from market search items that user have orders on',
+            }
         })
         .check(o => {
             if ([o.pages, o.profit, o.balance, o.top].some(isNaN))
@@ -98,5 +104,6 @@ module.exports = () => {
         withTrophy: argv.withTrophy,
         bot: argv.bot,
         json: argv.json,
+        unique: argv.unique,
     };
 };
