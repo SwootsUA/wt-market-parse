@@ -247,7 +247,7 @@ const PRICE_STEP = 0.01;
             for (const deal of uniqueDeals) {
                 dealsSet.add(deal.market);
             }
-            candidates = preCandidates.filter(i => !dealsSet.has(i.name));
+            candidates = preCandidates.filter(i => !dealsSet.has(i.hash_name));
         } else {
             candidates = preCandidates;
         }
