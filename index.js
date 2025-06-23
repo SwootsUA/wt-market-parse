@@ -48,7 +48,9 @@ const PRICE_STEP = 0.01;
 
             const usefulData = config.withTrophy
                 ? data
-                : data.filter(deal => !deal.market.includes('trophy'));
+                : data.filter(
+                      deal => !(deal.type === 'SELL' && deal.localPrice === 0.1)
+                  );
 
             const losingDeals = [];
             for (const deal of usefulData) {
@@ -137,7 +139,7 @@ const PRICE_STEP = 0.01;
                         `${Date.now()
                             .toString()
                             .slice(0, 16)
-                            .replace('T', ' ')}: ${totalBalance}\n`
+                            .replace('T', ' ')}: ${totalBalance.toFixed(3)}\n`
                     );
                 }
             }
