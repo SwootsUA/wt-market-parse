@@ -2,5 +2,7 @@
 /node_modules/
 /json_output/
 
+balance.log
+
 # dev
 /dev
