@@ -12,18 +12,11 @@ const {scoreItem} = require('./modules/score');
 const fs = require('fs');
 const path = require('path');
 
-// simple pick helper so we don't need lodash
 function pick(obj, keys) {
     return keys.reduce((out, k) => {
         if (k in obj) out[k] = obj[k];
         return out;
     }, {});
-}
-
-// helper to round to N significant figures
-function roundSig(x, sig = 3) {
-    if (typeof x !== 'number' || x === 0) return x;
-    return parseFloat(x.toPrecision(sig));
 }
 
 const FEE_RATE = 0.15;
@@ -356,7 +349,7 @@ const PRICE_STEP = 0.01;
             const o = {...item};
             Object.entries(o).forEach(([k, v]) => {
                 if (typeof v === 'number') {
-                    o[k] = roundSig(v, 3);
+                    o[k] = v.toPrecision(3);
                 }
             });
             return o;
