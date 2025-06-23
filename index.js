@@ -135,7 +135,7 @@ const PRICE_STEP = 0.01;
                 console.log(`Total balance: ${totalBalance.toFixed(2)}`);
                 if (config.json) {
                     fs.appendFileSync(
-                        './json_output/balance.log',
+                        './balance.log',
                         `${Date.now()
                             .toString()
                             .slice(0, 16)
