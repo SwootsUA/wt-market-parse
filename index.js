@@ -106,6 +106,13 @@ const PRICE_STEP = 0.01;
                 );
             }
 
+            const buyDeals = usefulData.reduce((acc, cur) => {
+                return cur.type === 'BUY' ? acc + 1 : acc;
+            }, 0);
+            const sellDeals = usefulData.reduce((acc, cur) => {
+                return cur.type === 'SELL' ? acc + 1 : acc;
+            }, 0);
+
             if (!config.bot) {
                 usefulData.sort((a, b) => b.score - a.score);
                 console.table(usefulData);
@@ -124,7 +131,6 @@ const PRICE_STEP = 0.01;
                 console.log(`Availible balance: ${userBalance.toFixed(2)}`);
                 const totalBalance = orderValue + userBalance;
                 console.log(`Total balance: ${totalBalance.toFixed(2)}`);
-
                 if (config.json) {
                     fs.appendFileSync(
                         './json_output/balance.log',
@@ -142,6 +148,7 @@ const PRICE_STEP = 0.01;
                     'All deals are looking good\nBalance: ' +
                         userBalanceG.toFixed(2)
                 );
+                console.log(`B${buyDeals} S${sellDeals}`);
                 return;
             }
 
@@ -165,6 +172,7 @@ const PRICE_STEP = 0.01;
                     ].join('\n');
 
                     console.log(msg + '\nBalance: ' + userBalanceN.toFixed(2));
+                    console.log(`B${buyDeals} S${sellDeals}`);
                 }
 
                 // early return so we don’t console.table as well
@@ -181,6 +189,7 @@ const PRICE_STEP = 0.01;
             }));
 
             console.table(output);
+            console.log(`B${buyDeals} S${sellDeals}`);
 
             return;
         }
