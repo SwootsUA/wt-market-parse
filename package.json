@@ -3,6 +3,7 @@
     "dotenv": "^16.5.0",
     "fs": "^0.0.1-security",
     "p-limit": "^6.2.0",
+    "puppeteer": "^24.10.2",
     "yargs": "^18.0.0"
   },
   "name": "wt-market-parse",
