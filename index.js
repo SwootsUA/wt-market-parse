@@ -156,13 +156,23 @@ const PRICE_STEP = 0.01;
                             : deal.betterPrice - PRICE_STEP
                     ).toFixed(2);
 
+                    const dealMarket = await books(deal.market);
+                    const bestSellPrice = dealMarket.SELL[0][0] / 10_000;
+
                     // build the message
                     const msg = [
-                        `⚠️ *New problem detected!*`,
+                        `⚠️ *${deal.market}*`,
                         ``,
                         `*Current Price:* \`${deal.localPrice.toFixed(2)}\``,
                         `*Suggested:* \`${suggested}\``,
-                        ``,
+                        `${
+                            deal.type === 'BUY'
+                                ? `New profit: ${(
+                                      bestSellPrice * (1 - FEE_RATE) -
+                                      deal.betterPrice
+                                  ).toFixed(2)}\n`
+                                : ''
+                        }`,
                         `[View on Market](https://trade.gaijin.net/market/1067/${deal.market})`,
                     ].join('\n');
 
